@@ -51,7 +51,7 @@ body { margin: 0; overflow: hidden; }
   }
   var crs=getQueryVariable("crs")||'EPSG:32633';
   var coverage=getQueryVariable("coverage")||'land_utm33_50m';
-  var wms=getQueryVariable("wms")||'http://wms.geonorge.no/skwms1/wms.topo2';
+  var wms=getQueryVariable("wms")||'http://openwms.statkart.no/skwms1/wms.topo2';
   var layers=getQueryVariable("layers")||'topo2_wms';
   var renderer = new THREE.WebGLRenderer();
   renderer.setSize(width, height);
@@ -67,7 +67,7 @@ body { margin: 0; overflow: hidden; }
   var geometry = new THREE.PlaneGeometry(demWidth, demHeight, demWidth-1, demHeight-1);
   var lines=new Array();
   var dem=new XMLHttpRequest();
-  dem.open('GET','http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE='+coverage+'&bbox='+bbox+'&CRS='+crs+'&RESPONSE_CRS='+crs+'&WIDTH='+demWidth+'&HEIGHT='+demHeight);
+  dem.open('GET','http:/openwms.statkart.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE='+coverage+'&bbox='+bbox+'&CRS='+crs+'&RESPONSE_CRS='+crs+'&WIDTH='+demWidth+'&HEIGHT='+demHeight);
    
    dem.onreadystatechange = function() {
          if(dem.readyState==4){
