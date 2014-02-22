@@ -70,7 +70,7 @@ body { margin: 0; overflow: hidden; }
   camera.lookAt(0,0,0);
   //camera.up.set( 0, 1, 0 );
   var controls = new THREE.TrackballControls(camera);
-  controls.noZoom=true;
+  
   var geometry = new THREE.PlaneGeometry(demWidth, demHeight, demWidth-1, demHeight-1);
  
   var dem=new XMLHttpRequest();
