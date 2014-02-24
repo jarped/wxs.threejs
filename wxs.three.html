@@ -35,6 +35,13 @@ body { margin: 0; overflow: hidden; }
 
   var metersWidth=bbox.split(',')[2]-bbox.split(',')[0];
   var metersHeight=bbox.split(',')[3]-bbox.split(',')[1];
+  
+  if (metersWidth>metersHeight){
+    demWidth=parseInt((metersWidth/metersHeight)*demWidth);
+  }
+  else if  (metersWidth<metersHeight){
+    demHeight=parseInt((metersHeight/metersWidth)*demHeight);
+  }
 
   var proportionWidth=metersWidth/demWidth; // mapunits between vertexes in x-dimention
   var proportionHeight=metersHeight/demHeight; // mapunits between vertexes in y-dimention
@@ -92,7 +99,7 @@ body { margin: 0; overflow: hidden; }
   dem.send();
 
 
-  var material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(wms+'?service=wms&version=1.3.0&request=getmap&crs='+crs+'&srs='+crs+'&WIDTH='+demWidth*9+'&HEIGHT='+demHeight*9+'&bbox='+bbox+'&layers='+layers+'&format=image/png')
+  var material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(wms+'?service=wms&version=1.3.0&request=getmap&crs='+crs+'&srs='+crs+'&WIDTH='+demWidth*5+'&HEIGHT='+demHeight*5+'&bbox='+bbox+'&layers='+layers+'&format=image/png')
         });
   var plane = new THREE.Mesh(geometry, material);
   scene.add(plane);
