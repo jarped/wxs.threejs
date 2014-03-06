@@ -28,6 +28,24 @@ body { margin: 0; overflow: hidden; }
     }
     return(false);
   }
+  function checkWebGL(){
+ if (!window.WebGLRenderingContext) {
+    // the browser doesn't even know what WebGL is
+    window.location = "http://get.webgl.org";
+  }
+  /*
+  else {
+    var canvas = document.getElementById("myCanvas");
+^   var context = canvas.getContext("webgl");
+    if (!context) {
+      // browser supports WebGL but initialization failed.
+      window.location = "http://get.webgl.org/troubleshooting";
+    }
+  }
+  */
+
+  }
+  checkWebGL();
   var width  = window.innerWidth;
   var height = window.innerHeight;
   var demWidth=getQueryVariable("WIDTH")||200;
@@ -86,10 +104,10 @@ body { margin: 0; overflow: hidden; }
   cameraHeight=getQueryVariable("Z")||(demHeight/2)/Math.tan((fov/2)*Math.PI/180); 
   
   //camera.position.set(x, y, cameraHeight);
-  camera.position.set(x, y, cameraHeight);
-  camera.lookAt(demWidth/2,demHeight/2,cameraHeight/2);
+  camera.position.set(0,0, cameraHeight);
+  camera.lookAt(0,0,0);
   //camera.up.set( 1, 1, 1 );
-  camera.up.set( 1, 1, 0 );
+  //camera.up.set( 0, 0, 1 );
   var controls = new THREE.TrackballControls(camera);
   
   var geometry = new THREE.PlaneGeometry(demWidth, demHeight, demWidth-1, demHeight-1); 
