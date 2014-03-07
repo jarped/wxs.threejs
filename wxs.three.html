@@ -2,12 +2,15 @@
 
 <html>
 <head>
-<title>WXS.threejs</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-<style>
-body { margin: 0; overflow: hidden; }
-</style>
+    <title>WXS.threejs</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
 <!--div id="webgl" style="background-color:#ccccff"></div-->
@@ -15,135 +18,6 @@ body { margin: 0; overflow: hidden; }
 <script src="./topo2.layers.js"></script>
 <script src="./three.min.js"></script>
 <script src="./TrackballControls.js"></script>
-
-<script>
-  function getQueryVariable(variable){
-    var query = window.location.search.substring(1);
-    var vars = query.split("&");
-    for (var i=0;i<vars.length;i++) {
-      var pair = vars[i].split("=");
-      if(pair[0].toUpperCase() == variable){
-        return pair[1];
-      }
-    }
-    return(false);
-  }
-  function checkWebGL(){
- if (!window.WebGLRenderingContext) {
-    // the browser doesn't even know what WebGL is
-    window.location = "http://get.webgl.org";
-  }
-  /*
-  else {
-    var canvas = document.getElementById("myCanvas");
-^   var context = canvas.getContext("webgl");
-    if (!context) {
-      // browser supports WebGL but initialization failed.
-      window.location = "http://get.webgl.org/troubleshooting";
-    }
-  }
-  */
-
-  }
-  checkWebGL();
-  var width  = window.innerWidth;
-  var height = window.innerHeight;
-  var demWidth=getQueryVariable("WIDTH")||200;
-  var demHeight=getQueryVariable("HEIGHT")||200;
-
-  var bbox=getQueryVariable("BBOX")||'161244,6831251,171526,6837409';
-
-  var metersWidth=bbox.split(',')[2]-bbox.split(',')[0];
-  var metersHeight=bbox.split(',')[3]-bbox.split(',')[1];
-  
-  if (metersWidth>metersHeight){
-    demWidth=parseInt((metersWidth/metersHeight)*demWidth);
-  }
-  else if  (metersWidth<metersHeight){
-    demHeight=parseInt((metersHeight/metersWidth)*demHeight);
-  }
-
-  var proportionWidth=metersWidth/demWidth; // mapunits between vertexes in x-dimention
-  var proportionHeight=metersHeight/demHeight; // mapunits between vertexes in y-dimention
-  var proportionAverage=((proportionWidth+proportionHeight)/2); // average mapunits between vertexes
-
-  var zInv=getQueryVariable("ZINV")||false;
-  if (zInv){
-      proportionAverage=proportionAverage*-1;
-  }
-  var zMult=getQueryVariable("ZMULT");
-  if (zMult){
-    zMult=proportionAverage/zMult;
-  }
-  else
-  {
-    zMult=proportionAverage;
-  }
-  var crs=getQueryVariable("CRS")||getQueryVariable("SRS")||'EPSG:32633';
-  var coverage=getQueryVariable("COVERAGE")||'land_utm33_10m';
-  var wms=getQueryVariable("WMS")||'http://openwms.statkart.no/skwms1/wms.topo2';
-  var wmsMult=getQueryVariable("WMSMULT")||5;
-  var wmsFormat=getQueryVariable("WMSFORMAT")||"image/png";
-  var wmsFormatMode="";
-  if (getQueryVariable("WMSFORMATMODE")){
-     wmsFormatMode='; mode='+getQueryVariable("WMSFORMATMODE");
-  }
-  // We've defined some standardlayers for the default wms-service in topo2.layers.js. Overwrite them if defined in url.
-  layers=getQueryVariable("LAYERS")||layers;
-  var renderer = new THREE.WebGLRenderer();
-  renderer.setSize(width, height);
-
-  var scene = new THREE.Scene();
-  scene.add(new THREE.AmbientLight(0xeeeeee));
-  var fov=45;
-  var camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 1000);
-
-  var x=getQueryVariable("X")||-demHeight/2;
-  var y=getQueryVariable("Y")||-demWidth/2;
-  
-  cameraHeight=getQueryVariable("Z")||(demHeight/2)/Math.tan((fov/2)*Math.PI/180); 
-  
-  //camera.position.set(x, y, cameraHeight);
-  camera.position.set(0,0, cameraHeight);
-  camera.lookAt(0,0,0);
-  //camera.up.set( 1, 1, 1 );
-  //camera.up.set( 0, 0, 1 );
-  var controls = new THREE.TrackballControls(camera);
-  
-  var geometry = new THREE.PlaneGeometry(demWidth, demHeight, demWidth-1, demHeight-1); 
-  var dem=new XMLHttpRequest();
-  dem.open('GET','http://openwms.statkart.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE='+coverage+'&bbox='+bbox+'&CRS='+crs+'&RESPONSE_CRS='+crs+'&WIDTH='+demWidth+'&HEIGHT='+demHeight);
-   
-   dem.onreadystatechange = function() {
-         if(dem.readyState==4){
-           var lines= dem.responseText.split("\n");
-           for (var i = 0, l = geometry.vertices.length; i < l; i++) {
-                window.geometry.vertices[i].z = (lines[i].split(' ')[2]/zMult);
-            }
-            window.render();
-            //while (window.cameraHeight > 50){
-            //  window.camera.position.set(0, 0, cameraHeight);
-            //  setTimeout(function() { window.cameraHeigh=window.cameraHeigh-1;}, 5000);
-            //}
-       }
-   }
-  dem.send();
-
-
-  var material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(wms+'?service=wms&version=1.3.0&request=getmap&crs='+crs+'&srs='+crs+'&WIDTH='+demWidth*wmsMult+'&HEIGHT='+demHeight*wmsMult+'&bbox='+bbox+'&layers='+layers+'&format='+wmsFormat+wmsFormatMode)
-        });
-  var plane = new THREE.Mesh(geometry, material);
-  scene.add(plane);
-
-  document.getElementById('webgl').appendChild(renderer.domElement);
-  //render();
-
-  function render() {
-    controls.update();  
-    requestAnimationFrame(render);
-    renderer.render(scene, camera);
-  }
-
-</script>
+<script src="wxs.three.js"></script>
 </body>
 </html>
