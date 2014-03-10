@@ -1,0 +1,10 @@
+wxs.threejs
+===========
+
+Realtime consumption of wxs-services
+
+The following licenses apply:
+
+threejs - MIT
+
+The solution uses web services from Kartverket which are subject to their own licenses (mostly CC-BY 3.0 Norway) and the Norwegian Geodata law. See http://kartverket.no/Kart/Kartverksted/Lisens/ for the license terms and http://kartverket.no/Kart/Kartverksted/ for details on the web services.
