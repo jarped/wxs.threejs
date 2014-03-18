@@ -3,6 +3,12 @@ wxs.threejs
 
 Realtime consumption of wxs-services
 
+Additional information:
+http://labs.kartverket.no/wcs-i-threejs/
+
+Example-calls to the WCS:
+http://labs.kartverket.no/wcs-i-quantum-gis/
+
 The following licenses apply:
 
 threejs - MIT
