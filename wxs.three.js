@@ -65,8 +65,8 @@ var dim = {
     },
     crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
     coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
-    wms: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
-    wmsMult: getQueryVariable("WMSMULT") || 1,
+    wms: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
+    wmsMult: getQueryVariable("WMSMULT") || 5,
     wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
     wmsFormatMode: "",
     zInv: getQueryVariable("ZINV") || false,
@@ -119,18 +119,24 @@ wxs3.init = function () {
     controls = new THREE.TrackballControls(camera);
     // Point camera directly down
     controls.target=new THREE.Vector3((dim.minx+dim.maxx)/2, (dim.miny+dim.maxy)/2,0);
-    
-    // Initialize group
-    geomGroup=new THREE.Object3D();
+    // For future reference
+    /*
+    materials=[];
+    geometryMain = new THREE.PlaneGeometry(dim.maxx-dim.minx, dim.maxy-dim.miny, (dim.demWidth - 1) , (dim.demHeight - 1));
+    planeMain=new THREE.Mesh(geometryMain,new THREE.MeshFaceMaterial(materials));
+    planeMain.position.y=(dim.miny+dim.maxy)/2;
+    planeMain.position.x=(dim.minx+dim.maxx)/2;
+    */
     // Generate tiles and boundingboxes
     bbox2tiles(dim.minx,dim.miny,dim.maxx,dim.maxy);
- scene.add(geomGroup);
+    //scene.add(planeMain);
+    
  document.getElementById('webgl').appendChild(renderer.domElement);
 }();
 
 function bbox2tiles(minx,miny,maxx,maxy){
     //TODO: generic tilematrix-parsing
-    
+
     // Proof of concept with 2 subdivision in each dimention:
     //0,0
     addTile(1,minx,miny,(minx+maxx)/2,(miny+maxy)/2);
@@ -160,7 +166,7 @@ function addTile(tileNr,minx,miny,maxx,maxy){
    
     var bbox=parseInt(minx)+','+parseInt(miny)+','+parseInt(maxx)+','+parseInt(maxy);
     var dem = new XMLHttpRequest();
-    dem.open('GET', 'http://wms.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE=' + dim.coverage + 
+    dem.open('GET', 'http://openwms.statkart.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE=' + dim.coverage + 
         '&bbox=' + bbox + 
         '&CRS=' + dim.crs + 
         '&RESPONSE_CRS=' + dim.crs + 
@@ -182,28 +188,49 @@ function addTile(tileNr,minx,miny,maxx,maxy){
                 geometry.vertices[i].z = lines[i].split(' ')[2];
                 //console.log(geometry.vertices[i].z)
             }
-            material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(dim.wms + '?service=wms&version=1.3.0&request=getmap&crs=' +
+            /*material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(dim.wms + '?service=wms&version=1.3.0&request=getmap&crs=' +
         dim.crs + '&srs=' + dim.crs + '&WIDTH=' + dim.demWidth * dim.wmsMult + '&HEIGHT=' + dim.demHeight * dim.wmsMult + '&bbox=' + bbox +
       '&layers=' + layers + '&format=' + dim.wmsFormat + dim.wmsFormatMode)});
+            */
+      material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(dim.wms + '?service=wms&version=1.3.0&request=getmap&crs=' +
+        dim.crs + '&srs=' + dim.crs + '&WIDTH=' + dim.demWidth * dim.wmsMult + '&HEIGHT=' + dim.demHeight * dim.wmsMult + '&bbox=' + bbox +
+      '&layers=' + layers + '&format=' + dim.wmsFormat + dim.wmsFormatMode,
+      new THREE.UVMapping()
+      )});
+      //materials.push(material);
        
     
-    material.needsUpdate=true;
-    material.map.needsUpdate=true;
-    plane = new THREE.Mesh(geometry, material);
-    //plane.rotation.x = - Math.PI / 2;
-    //plane.position.y=0;
-    /*
-    plane.position.y=((miny+maxy)/2)+50;
-    plane.position.x=((minx+maxx)/2)+50;
-    */
+    //material.needsUpdate=true;
+    //material.map.needsUpdate=true;
+    var plane = new THREE.Mesh(geometry, material);
+    // Move plane to coordinates
+    
     plane.position.y=(miny+maxy)/2;
     plane.position.x=(minx+maxx)/2;
-    geomGroup.add(plane);
+    scene.add(plane);
+    
+
+    // For future reference
+    /*
+    planeMain.position.y=(miny+maxy)/2;
+    planeMain.position.x=(minx+maxx)/2;
+    */
+    //THREE.GeometryUtils.merge(geometryMain,geometry);
+    //planeMain.add(plane);
             dim.tilesFinished+=1;
+            window.render();
+            /*plane.scale.z=0;
+            while (plane.scale.z<1){
+                plane.scale.z+=0.001;
+                window.render();
+            }
+            */
+            /*
             if (dim.tilesFinished==dim.tilesTotal){
             //document.getElementById('webgl').children[tilenr].
                 window.render();
             }
+            */
         //}
         //geometry.needsUpdate=true;
             console.log('rendering bbox ' + bbox);
