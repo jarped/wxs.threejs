@@ -66,11 +66,13 @@ var dim = {
     crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
     coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
     wms: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
-    wmsMult: getQueryVariable("WMSMULT") || 5,
+    wmsMult: getQueryVariable("WMSMULT") || 1,
     wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
     wmsFormatMode: "",
     zInv: getQueryVariable("ZINV") || false,
-    zMult: getQueryVariable("ZMULT")
+    zMult: getQueryVariable("ZMULT"),
+    proportionWidth: 0,
+    proportionHeight: 0
     //x: getQueryVariable("X") || -dim.demHeight / 2,
     //y: getQueryVariable("Y") || -dim.demWidth / 2
 }.init();
@@ -84,9 +86,9 @@ wxs3.init = function () {
         dim.demHeight = parseInt((dim.metersHeight / dim.metersWidth) * dim.demHeight);
     }
 
-    proportionWidth = dim.metersWidth / dim.demWidth; // mapunits between vertexes in x-dimention
-    proportionHeight = dim.metersHeight / dim.demHeight; // mapunits between vertexes in y-dimention
-    proportionAverage = ((proportionWidth + proportionHeight) / 2); // average mapunits between vertexes
+    dim.proportionWidth = dim.metersWidth / dim.demWidth; // mapunits between vertexes in x-dimention
+    dim.proportionHeight = dim.metersHeight / dim.demHeight; // mapunits between vertexes in y-dimention
+    proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2); // average mapunits between vertexes
 
     if (dim.zInv) {
         proportionAverage *= -1;
@@ -119,14 +121,16 @@ wxs3.init = function () {
     controls = new THREE.TrackballControls(camera);
     // Point camera directly down
     controls.target=new THREE.Vector3((dim.minx+dim.maxx)/2, (dim.miny+dim.maxy)/2,0);
-    // For future reference
-    /*
+   // For future reference
+    
     materials=[];
-    geometryMain = new THREE.PlaneGeometry(dim.maxx-dim.minx, dim.maxy-dim.miny, (dim.demWidth - 1) , (dim.demHeight - 1));
-    planeMain=new THREE.Mesh(geometryMain,new THREE.MeshFaceMaterial(materials));
-    planeMain.position.y=(dim.miny+dim.maxy)/2;
-    planeMain.position.x=(dim.minx+dim.maxx)/2;
-    */
+    //geometryMain = new THREE.PlaneGeometry(dim.maxx-dim.minx, dim.maxy-dim.miny, (dim.demWidth - 1) , (dim.demHeight - 1));
+    geometryMain = new THREE.Geometry();
+    //planeMain=new THREE.Mesh(geometryMain,new THREE.MeshFaceMaterial(materials));
+    dummy=new THREE.Mesh();
+    //planeMain.position.y=(dim.miny+dim.maxy)/2;
+    //planeMain.position.x=(dim.minx+dim.maxx)/2;
+    
     // Generate tiles and boundingboxes
     bbox2tiles(dim.minx,dim.miny,dim.maxx,dim.maxy);
     //scene.add(planeMain);
@@ -139,13 +143,13 @@ function bbox2tiles(minx,miny,maxx,maxy){
 
     // Proof of concept with 2 subdivision in each dimention:
     //0,0
-    addTile(1,minx,miny,(minx+maxx)/2,(miny+maxy)/2);
+    addTile('x0_y0',minx,miny,(minx+maxx)/2,(miny+maxy)/2);
     //1,0
-    addTile(2,(minx+maxx)/2,miny,maxx,(miny+maxy)/2);
+    addTile('x1_y0',(minx+maxx)/2,miny,maxx,(miny+maxy)/2);
     //0,1
-    addTile(3,minx,(miny+maxy)/2,(minx+maxx)/2,maxy);
+    addTile('x0_y1',minx,(miny+maxy)/2,(minx+maxx)/2,maxy);
     //1,1
-    addTile(4,(minx+maxx)/2,(miny+maxy)/2,maxx,maxy);
+    addTile('x1_y1',(minx+maxx)/2,(miny+maxy)/2,maxx,maxy);
    
     //addTile(1,minx,miny,maxx,maxy);
     
@@ -164,58 +168,102 @@ function addTile(tileNr,minx,miny,maxx,maxy){
     bbox=parseInt(minx+50)+','+parseInt(miny+50)+','+parseInt(maxx+50)+','+parseInt(maxy+50);
     */
    
-    var bbox=parseInt(minx)+','+parseInt(miny)+','+parseInt(maxx)+','+parseInt(maxy);
+    var bboxWCS=parseInt(minx)+','+parseInt(miny-dim.proportionHeight)+','+parseInt(maxx+dim.proportionWidth)+','+parseInt(maxy);
+    //var bboxWCS=parseInt(minx)+','+parseInt(miny)+','+parseInt(maxx)+','+parseInt(maxy);
+    
     var dem = new XMLHttpRequest();
-    dem.open('GET', 'http://openwms.statkart.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&COVERAGE=' + dim.coverage + 
-        '&bbox=' + bbox + 
+    dem.open('GET', 'http://openwms.statkart.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ'+
+        '&COVERAGE=' + dim.coverage + 
+        '&bbox=' + bboxWCS + 
         '&CRS=' + dim.crs + 
         '&RESPONSE_CRS=' + dim.crs + 
         /*
-        '&WIDTH=' + parseInt(dim.demWidth +100)+ 
-        '&HEIGHT=' + parseInt(dim.demHeight + 100),false);
+        '&WIDTH=' + parseInt(dim.demWidth +2)+ 
+        '&HEIGHT=' + parseInt(dim.demHeight + 2),
         */
-        '&WIDTH=' + parseInt(dim.demWidth)+ 
-        '&HEIGHT=' + parseInt(dim.demHeight),true);
+        '&WIDTH=' + parseInt(dim.demWidth+1)+ 
+        '&HEIGHT=' + parseInt(dim.demHeight+1), // +
+        //'&INTERPOLATION=bilinear',
+        true
+        );
         
     dem.onreadystatechange = function () {
         var i, l, lines;
- var geometry;
+ var geometry, bboxWMS, minxWMS, minyWMS,maxxWMS,maxyWMS;
+ 
         if (this.readyState == 4) {
-             var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth - 1) , (dim.demHeight - 1));
+
+       //var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth - 1) , (dim.demHeight - 1));
+       var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth ) , (dim.demHeight ));
             lines = this.responseText.split("\n");
             for (i = 0, l = geometry.vertices.length; i < l; i++) {
                 //geometry.vertices[i].z = (lines[i].split(' ')[2] / dim.zMult);
+                /*
+                if( i<dim.demWidth){
+                    continue;
+                }
+                */
+                geometry.vertices[i].x = lines[i].split(' ')[0];
+                geometry.vertices[i].y = lines[i].split(' ')[1];
                 geometry.vertices[i].z = lines[i].split(' ')[2];
+                if (i==0){
+                    minxWMS=geometry.vertices[i].x;
+                    maxyWMS=geometry.vertices[i].y;
+                }
+                if (i==l-1){
+                    maxxWMS=geometry.vertices[i].x;
+                    minyWMS=geometry.vertices[i].y;
+                }
                 //console.log(geometry.vertices[i].z)
             }
+            bboxWMS=minxWMS+','+minyWMS+','+maxxWMS+','+maxyWMS;
             /*material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(dim.wms + '?service=wms&version=1.3.0&request=getmap&crs=' +
         dim.crs + '&srs=' + dim.crs + '&WIDTH=' + dim.demWidth * dim.wmsMult + '&HEIGHT=' + dim.demHeight * dim.wmsMult + '&bbox=' + bbox +
       '&layers=' + layers + '&format=' + dim.wmsFormat + dim.wmsFormatMode)});
             */
-      material = new THREE.MeshPhongMaterial({ map: THREE.ImageUtils.loadTexture(dim.wms + '?service=wms&version=1.3.0&request=getmap&crs=' +
-        dim.crs + '&srs=' + dim.crs + '&WIDTH=' + dim.demWidth * dim.wmsMult + '&HEIGHT=' + dim.demHeight * dim.wmsMult + '&bbox=' + bbox +
-      '&layers=' + layers + '&format=' + dim.wmsFormat + dim.wmsFormatMode,
-      new THREE.UVMapping()
-      )});
+            
+      material = new THREE.MeshPhongMaterial(
+          { 
+          map: THREE.ImageUtils.loadTexture(
+            dim.wms + '?service=wms&version=1.3.0&request=getmap'+
+            '&crs=' + dim.crs + 
+            '&srs=' + dim.crs + 
+            '&WIDTH=' + dim.demWidth * dim.wmsMult + 
+            '&HEIGHT=' + dim.demHeight * dim.wmsMult + 
+            '&bbox=' + bboxWMS +
+            '&layers=' + layers + 
+            '&format=' + dim.wmsFormat + dim.wmsFormatMode,
+            new THREE.UVMapping())
+        }
+      );
+      material.name='material_'+tileNr;
       //materials.push(material);
        
     
     //material.needsUpdate=true;
     //material.map.needsUpdate=true;
     var plane = new THREE.Mesh(geometry, material);
+    plane.name='tile_'+tileNr;
     // Move plane to coordinates
     
-    plane.position.y=(miny+maxy)/2;
-    plane.position.x=(minx+maxx)/2;
+    //plane.position.y=(miny+maxy)/2;
+    //plane.position.x=(minx+maxx)/2;
     scene.add(plane);
-    
-
+        // For future reference
+    /*
+    //dummy.position.y=(miny+maxy)/2;
+    //dummy.position.x=(minx+maxx)/2;
+    dummy.geometry=geometry;
+    //dummy.map=material;
+    THREE.GeometryUtils.merge(geometryMain,dummy);
+    */
     // For future reference
     /*
     planeMain.position.y=(miny+maxy)/2;
     planeMain.position.x=(minx+maxx)/2;
     */
-    //THREE.GeometryUtils.merge(geometryMain,geometry);
+    //THREE.GeometryUtils.merge(geometryMain,plane);
+    
     //planeMain.add(plane);
             dim.tilesFinished+=1;
             window.render();
@@ -225,15 +273,43 @@ function addTile(tileNr,minx,miny,maxx,maxy){
                 window.render();
             }
             */
-            /*
+          
+          // When all tiles are loaded, generate single mesh containing all
+          //
+          /*
             if (dim.tilesFinished==dim.tilesTotal){
             //document.getElementById('webgl').children[tilenr].
+            
+            geometryMain.computeFaceNormals();
+            geometryMain.computeVertexNormals();
+            geometryMain.elementsNeedUpdate=true;
+            geometryMain.mergeVertices();
+            THREE.GeometryUtils.triangulateQuads( geometryMain );
+            
+             geometryMain.mergeVertices();
+            
+             geometryFinal=new THREE.PlaneGeometry(dim.maxx-dim.minx, dim.maxy-dim.miny, ((dim.demWidth *(dim.tilesTotal/2)) - 1) , ((dim.demHeight * (dim.tilesTotal/2))- 1));
+             var i2, l2;
+             for (i2 = 0, l2 = geometryMain.vertices.length; i2 < l2; i2++) {
+                //geometry.vertices[i].z = (lines[i].split(' ')[2] / dim.zMult);
+
+                geometryFinal.vertices[i2].x = geometryMain.vertices[i2].x;
+                geometryFinal.vertices[i2].y = geometryMain.vertices[i2].y;
+                geometryFinal.vertices[i2].z = geometryMain.vertices[i2].z;
+             }
+            
+                var mesh = new THREE.Mesh( geometryMain,new THREE.MeshBasicMaterial( { color: 0x000000, depthTest: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, wireframe: true } ));
+                //var mesh = new THREE.Mesh( geometryMain, THREE.MeshFaceMaterial(materials) );
+                //mesh.position.y=(dim.miny+dim.maxy)/2;
+                //mesh.position.x=(dim.minx+dim.maxx)/2;
+                
+				scene.add( mesh );
                 window.render();
             }
-            */
+          */
         //}
         //geometry.needsUpdate=true;
-            console.log('rendering bbox ' + bbox);
+            console.log('rendering bbox ' + bboxWMS);
             console.log('nr of finished geom: ' + dim.tilesFinished);
     }};
     dem.send();
