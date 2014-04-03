@@ -43,8 +43,8 @@ function getQueryVariable(variable) {
 var dim = {
     width: window.innerWidth,
     height: window.innerHeight,
-    demWidth: getQueryVariable("WIDTH") || 50,
-    demHeight: getQueryVariable("HEIGHT") || 50,
+    demWidth: getQueryVariable("WIDTH") || 100,
+    demHeight: getQueryVariable("HEIGHT") || 100,
     bbox: getQueryVariable("BBOX") || '161244,6831251,171526,6837409',
     metersWidth: 0,
     metersHeight: 0,
@@ -66,7 +66,7 @@ var dim = {
     crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
     coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
     wms: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
-    wmsMult: getQueryVariable("WMSMULT") || 1,
+    wmsMult: getQueryVariable("WMSMULT") || 5,
     wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
     wmsFormatMode: "",
     zInv: getQueryVariable("ZINV") || false,
@@ -78,7 +78,7 @@ var dim = {
 }.init();
 
 wxs3.init = function () {
-    var plane, cameraHeight, fov, proportionAverage, proportionHeight, proportionWidth;
+    var cameraHeight, fov, proportionAverage, proportionHeight, proportionWidth;
 
     if (dim.metersWidth > dim.metersHeight) {
         dim.demWidth = parseInt((dim.metersWidth / dim.metersHeight) * dim.demWidth);
@@ -122,7 +122,7 @@ wxs3.init = function () {
     // Point camera directly down
     controls.target=new THREE.Vector3((dim.minx+dim.maxx)/2, (dim.miny+dim.maxy)/2,0);
    // For future reference
-    
+    /*
     materials=[];
     //geometryMain = new THREE.PlaneGeometry(dim.maxx-dim.minx, dim.maxy-dim.miny, (dim.demWidth - 1) , (dim.demHeight - 1));
     geometryMain = new THREE.Geometry();
@@ -130,7 +130,7 @@ wxs3.init = function () {
     dummy=new THREE.Mesh();
     //planeMain.position.y=(dim.miny+dim.maxy)/2;
     //planeMain.position.x=(dim.minx+dim.maxx)/2;
-    
+    */
     // Generate tiles and boundingboxes
     bbox2tiles(dim.minx,dim.miny,dim.maxx,dim.maxy);
     //scene.add(planeMain);
@@ -181,8 +181,8 @@ function addTile(tileNr,minx,miny,maxx,maxy){
         '&WIDTH=' + parseInt(dim.demWidth +2)+ 
         '&HEIGHT=' + parseInt(dim.demHeight + 2),
         */
-        '&WIDTH=' + parseInt(dim.demWidth+1)+ 
-        '&HEIGHT=' + parseInt(dim.demHeight+1), // +
+        '&WIDTH=' + parseInt(dim.demWidth)+ 
+        '&HEIGHT=' + parseInt(dim.demHeight), // +
         //'&INTERPOLATION=bilinear',
         true
         );
@@ -193,8 +193,8 @@ function addTile(tileNr,minx,miny,maxx,maxy){
  
         if (this.readyState == 4) {
 
-       //var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth - 1) , (dim.demHeight - 1));
-       var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth ) , (dim.demHeight ));
+       var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth - 1) , (dim.demHeight - 1));
+       //var geometry = new THREE.PlaneGeometry(maxx-minx, maxy-miny, (dim.demWidth ) , (dim.demHeight ));
             lines = this.responseText.split("\n");
             for (i = 0, l = geometry.vertices.length; i < l; i++) {
                 //geometry.vertices[i].z = (lines[i].split(' ')[2] / dim.zMult);
