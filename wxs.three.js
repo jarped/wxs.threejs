@@ -51,7 +51,12 @@ var wxs3 = wxs3 || {};
         this.createControls();
 
         // Generate tiles and boundingboxes
-        this.bbox2tiles(dim.minx, dim.miny, dim.maxx, dim.maxy);
+        this.bbox2tiles({
+            minx: dim.minx,
+            miny: dim.miny,
+            maxx: dim.maxx,
+            maxy: dim.maxy
+        });
         document.getElementById('webgl').appendChild(this.renderer.domElement);
     };
 
@@ -100,26 +105,50 @@ var wxs3 = wxs3 || {};
         this.renderer.render(this.scene, this.camera);
     };
 
-    Wxs3.prototype.bbox2tiles = function (minx, miny, maxx, maxy) {
+    Wxs3.prototype.bbox2tiles = function (bounds) {
         //TODO: generic tilematrix-parsing
         // Proof of concept with 2 subdivision in each dimention:
+
         //0,0
-        this.addTile('x0_y0', minx, miny, (minx + maxx) / 2, (miny + maxy) / 2);
+        this.addTile('x0_y0', {
+            minx: bounds.minx,
+            miny: bounds.miny,
+            maxx: (bounds.minx + bounds.maxx) / 2,
+            maxy: (bounds.miny + bounds.maxy) / 2
+        });
+
         //1,0
-        this.addTile('x1_y0', (minx + maxx) / 2, miny, maxx, (miny + maxy) / 2);
+        this.addTile('x1_y0', {
+            minx: (bounds.minx + bounds.maxx) / 2,
+            miny: bounds.miny,
+            maxx: bounds.maxx,
+            maxy: (bounds.miny + bounds.maxy) / 2
+        });
+
         //0,1
-        this.addTile('x0_y1', minx, (miny + maxy) / 2, (minx + maxx) / 2, maxy);
+        this.addTile('x0_y1', {
+            minx: bounds.minx,
+            miny: (bounds.miny + bounds.maxy) / 2,
+            maxx: (bounds.minx + bounds.maxx) / 2,
+            maxy: bounds.maxy
+        });
+
         //1,1
-        this.addTile('x1_y1', (minx + maxx) / 2, (miny + maxy) / 2, maxx, maxy);
+        this.addTile('x1_y1', {
+            minx: (bounds.minx + bounds.maxx) / 2,
+            miny: (bounds.miny + bounds.maxy) / 2,
+            maxx: bounds.maxx,
+            maxy: bounds.maxy
+        });
     };
 
-    Wxs3.prototype.addTile = function (tileNr, minx, miny, maxx, maxy) {
+    Wxs3.prototype.addTile = function (tileNr, bounds) {
 
         var bboxWCS = [
-            parseInt(minx, 10),
-            parseInt(miny - this.dim.proportionHeight, 10),
-            parseInt(maxx + this.dim.proportionWidth, 10),
-            parseInt(maxy, 10)
+            parseInt(bounds.minx, 10),
+            parseInt(bounds.miny - this.dim.proportionHeight, 10),
+            parseInt(bounds.maxx + this.dim.proportionWidth, 10),
+            parseInt(bounds.maxy, 10)
         ].join(',');
 
         var url = 'http://openwms.statkart.no/skwms1/wcs.dtm?' +
@@ -140,18 +169,18 @@ var wxs3 = wxs3 || {};
         var that = this;
         demTileRequest.onreadystatechange = function () {
             if (this.readyState === 4) {
-                that.demTileLoaded(tileNr, minx, miny, maxx, maxy, this.responseText);
+                that.demTileLoaded(tileNr, bounds, this.responseText);
             }
         };
         demTileRequest.send();
     };
 
-    Wxs3.prototype.demTileLoaded = function (tileNr, minx, miny, maxx, maxy, responseText) {
+    Wxs3.prototype.demTileLoaded = function (tileNr, bounds, responseText) {
 
         var minxWMS, minyWMS, maxxWMS, maxyWMS;
         var geometry = new THREE.PlaneGeometry(
-            maxx - minx,
-            maxy - miny,
+            bounds.maxx - bounds.minx,
+            bounds.maxy - bounds.miny,
             (this.dim.demWidth - 1),
             (this.dim.demHeight - 1)
         );
