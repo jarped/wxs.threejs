@@ -1,6 +1,6 @@
 var wxs3 = wxs3 || {};
 
-(function () {
+(function (ns) {
     'use strict';
 
     //check WebGL
@@ -143,7 +143,7 @@ var wxs3 = wxs3 || {};
         return material;
     };
 
-    var Wxs3 = function (layers, dim) {
+    ns.ThreeDMap = function (layers, dim) {
 
         this.dim = dim;
         this.camera = null;
@@ -154,14 +154,11 @@ var wxs3 = wxs3 || {};
 
         //TODO: these shpuld be moved to separate functions to improve
         //readability. I'm not quite certain how to name these functions
-        console.log(dim.metersWidth, dim.metersHeight);
         if (dim.metersWidth > dim.metersHeight) {
             var widthHeightRatio = dim.metersWidth / dim.metersHeight;
             dim.demWidth = parseInt(widthHeightRatio * dim.demWidth, 10);
         } else if (dim.metersWidth < dim.metersHeight) {
-            console.log("!!")
             var heightWidthRatio = dim.metersHeight / dim.metersWidth;
-            console.log(heightWidthRatio)
             dim.demHeight = parseInt(heightWidthRatio * dim.demHeight, 10);
         }
 
@@ -195,17 +192,17 @@ var wxs3 = wxs3 || {};
         document.getElementById('webgl').appendChild(this.renderer.domElement);
     };
 
-    Wxs3.prototype.createRenderer = function () {
+    ns.ThreeDMap.prototype.createRenderer = function () {
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(this.dim.width, this.dim.height);
     };
 
-    Wxs3.prototype.createScene = function () {
+    ns.ThreeDMap.prototype.createScene = function () {
         this.scene = new THREE.Scene();
         this.scene.add(new THREE.AmbientLight(0xeeeeee));
     };
 
-    Wxs3.prototype.createCamera = function () {
+    ns.ThreeDMap.prototype.createCamera = function () {
         var fov = 45;
         this.camera = new THREE.PerspectiveCamera(
             fov,
@@ -226,7 +223,7 @@ var wxs3 = wxs3 || {};
         this.camera.position.set(centerX, centerY, cameraHeight);
     };
 
-    Wxs3.prototype.createControls = function () {
+    ns.ThreeDMap.prototype.createControls = function () {
         this.controls = new THREE.TrackballControls(this.camera);
         // Point camera directly down
         var centerX = (this.dim.minx + this.dim.maxx) / 2;
@@ -234,13 +231,13 @@ var wxs3 = wxs3 || {};
         this.controls.target = new THREE.Vector3(centerX, centerY, 0);
     };
 
-    Wxs3.prototype.render = function () {
+    ns.ThreeDMap.prototype.render = function () {
         this.controls.update();
         window.requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
     };
 
-    Wxs3.prototype.bbox2tiles = function (bounds) {
+    ns.ThreeDMap.prototype.bbox2tiles = function (bounds) {
         //TODO: generic tilematrix-parsing
         // Proof of concept with 2 subdivision in each dimension:
 
@@ -287,7 +284,7 @@ var wxs3 = wxs3 || {};
         );
     };
 
-    Wxs3.prototype.tileLoaded = function (tile) {
+    ns.ThreeDMap.prototype.tileLoaded = function (tile) {
         this.scene.add(tile.plane);
         this.render();
     };
@@ -306,7 +303,7 @@ var wxs3 = wxs3 || {};
         return false;
     }
 
-    var dim = {
+    ns.Dim = {
         width: window.innerWidth,
         height: window.innerHeight,
         demWidth: getQueryVariable("WIDTH") || 100,
@@ -352,9 +349,10 @@ var wxs3 = wxs3 || {};
         Z: getQueryVariable("Z") || null,
         proportionWidth: 0,
         proportionHeight: 0
-    }.init();
+    };
 
+    var dim = ns.Dim.init();
     var wmsLayers = getQueryVariable("LAYERS") || layers;
-    var wxs3 = new Wxs3(wmsLayers, dim);
+    var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
-}());
+}(wxs3));
