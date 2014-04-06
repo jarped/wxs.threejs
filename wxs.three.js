@@ -17,8 +17,6 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
-        var proportionAverage;
-
         if (dim.metersWidth > dim.metersHeight) {
             dim.demWidth = parseInt((dim.metersWidth / dim.metersHeight) * dim.demWidth, 10);
         } else if (dim.metersWidth < dim.metersHeight) {
@@ -27,7 +25,7 @@ var wxs3 = wxs3 || {};
 
         dim.proportionWidth = dim.metersWidth / dim.demWidth; // mapunits between vertexes in x-dimention
         dim.proportionHeight = dim.metersHeight / dim.demHeight; // mapunits between vertexes in y-dimention
-        proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2); // average mapunits between vertexes
+        var proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2); // average mapunits between vertexes
 
         if (dim.zInv) {
             proportionAverage *= -1;
@@ -38,13 +36,11 @@ var wxs3 = wxs3 || {};
             dim.zMult = proportionAverage;
         }
 
-
-
         this.wmsLayers = layers;
 
         this.createRenderer();
         this.createScene();
-
+        this.createCamera();
 
         this.controls = new THREE.TrackballControls(this.camera);
         // Point camera directly down
