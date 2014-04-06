@@ -185,12 +185,7 @@ var wxs3 = wxs3 || {};
         this.createControls();
 
         // Generate tiles and boundingboxes
-        this.bbox2tiles({
-            minx: dim.minx,
-            miny: dim.miny,
-            maxx: dim.maxx,
-            maxy: dim.maxy
-        });
+        this.bbox2tiles(this.dim.getBounds());
         document.getElementById('webgl').appendChild(this.renderer.domElement);
     };
 
@@ -296,7 +291,7 @@ var wxs3 = wxs3 || {};
         var pair, i;
         var query = window.location.search.substring(1);
         var vars = query.split("&");
-        for (i = 0; i < vars.length; i++) {
+        for (i = 0; i < vars.length; i = i + 1) {
             pair = vars[i].split("=");
             if (pair[0].toUpperCase() === variable) {
                 return pair[1];
@@ -317,13 +312,22 @@ var wxs3 = wxs3 || {};
         maxx: 0,
         miny: 0,
         maxy: 0,
+        getBounds: function () {
+            return {
+                minx: this.minx,
+                miny: this.miny,
+                maxx: this.maxx,
+                maxy: this.maxy
+            };
+        },
         init: function () {
-            this.metersWidth = this.bbox.split(',')[2] - this.bbox.split(',')[0];
-            this.metersHeight = this.bbox.split(',')[3] - this.bbox.split(',')[1];
-            this.minx = parseInt(this.bbox.split(',')[0], 10);
-            this.maxx = parseInt(this.bbox.split(',')[2], 10);
-            this.miny = parseInt(this.bbox.split(',')[1], 10);
-            this.maxy = parseInt(this.bbox.split(',')[3], 10);
+            var splitBbox = this.bbox.split(',');
+            this.metersWidth = [2] - splitBbox[0];
+            this.metersHeight = splitBbox[3] - splitBbox[1];
+            this.minx = parseInt(splitBbox[0], 10);
+            this.maxx = parseInt(splitBbox[2], 10);
+            this.miny = parseInt(splitBbox[1], 10);
+            this.maxy = parseInt(splitBbox[3], 10);
 
             if (getQueryVariable("WMSFORMATMODE")) {
                 this.wmsFormatMode = '; mode=' + getQueryVariable("WMSFORMATMODE");
