@@ -9,20 +9,6 @@ var wxs3 = wxs3 || {};
         window.location = "http://get.webgl.org";
     }
 
-    // extraction for URL parameters
-    function getQueryVariable(variable) {
-        var pair, i;
-        var query = window.location.search.substring(1);
-        var vars = query.split("&");
-        for (i = 0; i < vars.length; i++) {
-            pair = vars[i].split("=");
-            if (pair[0].toUpperCase() === variable) {
-                return pair[1];
-            }
-        }
-        return false;
-    }
-
     var Wxs3 = function (layers, dim) {
 
         this.dim = dim;
@@ -52,9 +38,7 @@ var wxs3 = wxs3 || {};
             dim.zMult = proportionAverage;
         }
 
-        if (getQueryVariable("WMSFORMATMODE")) {
-            dim.wmsFormatMode = '; mode=' + getQueryVariable("WMSFORMATMODE");
-        }
+
 
         this.wmsLayers = layers;
 
@@ -203,6 +187,20 @@ var wxs3 = wxs3 || {};
         return material;
     };
 
+    // extraction for URL parameters
+    function getQueryVariable(variable) {
+        var pair, i;
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (i = 0; i < vars.length; i++) {
+            pair = vars[i].split("=");
+            if (pair[0].toUpperCase() === variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+
     var dim = {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -222,6 +220,10 @@ var wxs3 = wxs3 || {};
             this.maxx = parseInt(this.bbox.split(',')[2], 10);
             this.miny = parseInt(this.bbox.split(',')[1], 10);
             this.maxy = parseInt(this.bbox.split(',')[3], 10);
+
+            if (getQueryVariable("WMSFORMATMODE")) {
+                this.wmsFormatMode = '; mode=' + getQueryVariable("WMSFORMATMODE");
+            }
             return this;
         },
         crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
