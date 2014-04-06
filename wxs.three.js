@@ -11,14 +11,9 @@ var wxs3 = wxs3 || {};
 
     // extraction for URL parameters
     function getQueryVariable(variable) {
-        var pair,
-            i,
-            vars,
-            query;
-        console.log("getQueryVariable :" + variable);
-
-        query = window.location.search.substring(1);
-        vars = query.split("&");
+        var pair, i;
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
         for (i = 0; i < vars.length; i++) {
             pair = vars[i].split("=");
             if (pair[0].toUpperCase() === variable) {
@@ -62,7 +57,7 @@ var wxs3 = wxs3 || {};
         }
 
         // We've defined some standardlayers for the default wms-service in topo2.layers.js. Overwrite them if defined in url.
-        this.wmsLayers = getQueryVariable("LAYERS") || layers;
+        this.wmsLayers = layers;
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(dim.width, dim.height);
@@ -171,11 +166,7 @@ var wxs3 = wxs3 || {};
         plane.name = 'tile_' + tileNr;
         this.scene.add(plane);
 
-        this.dim.tilesFinished += 1;
         this.render();
-
-        console.log('rendering bbox ' + bboxWMS);
-        console.log('nr of finished geom: ' + this.dim.tilesFinished);
     };
 
     Wxs3.prototype.createMaterial = function (bboxWMS, tileNr) {
@@ -213,8 +204,6 @@ var wxs3 = wxs3 || {};
         maxx: 0,
         miny: 0,
         maxy: 0,
-        tilesFinished: 0,
-        tilesTotal: 4,
         init: function () {
             this.metersWidth = this.bbox.split(',')[2] - this.bbox.split(',')[0];
             this.metersHeight = this.bbox.split(',')[3] - this.bbox.split(',')[1];
@@ -236,6 +225,7 @@ var wxs3 = wxs3 || {};
         proportionHeight: 0
     }.init();
 
+    var layers = getQueryVariable("LAYERS") || layers;
     var wxs3 = new Wxs3(layers, dim);
 
 }());
