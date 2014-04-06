@@ -153,12 +153,15 @@ var wxs3 = wxs3 || {};
 
 
         //TODO: these shpuld be moved to separate functions to improve
-        //readability. I'm not quite certiain how to name these functions
+        //readability. I'm not quite certain how to name these functions
+        console.log(dim.metersWidth, dim.metersHeight);
         if (dim.metersWidth > dim.metersHeight) {
             var widthHeightRatio = dim.metersWidth / dim.metersHeight;
             dim.demWidth = parseInt(widthHeightRatio * dim.demWidth, 10);
         } else if (dim.metersWidth < dim.metersHeight) {
+            console.log("!!")
             var heightWidthRatio = dim.metersHeight / dim.metersWidth;
+            console.log(heightWidthRatio)
             dim.demHeight = parseInt(heightWidthRatio * dim.demHeight, 10);
         }
 
@@ -325,7 +328,7 @@ var wxs3 = wxs3 || {};
         },
         init: function () {
             var splitBbox = this.bbox.split(',');
-            this.metersWidth = [2] - splitBbox[0];
+            this.metersWidth = splitBbox[2] - splitBbox[0];
             this.metersHeight = splitBbox[3] - splitBbox[1];
             this.minx = parseInt(splitBbox[0], 10);
             this.maxx = parseInt(splitBbox[2], 10);
