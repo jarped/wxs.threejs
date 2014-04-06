@@ -21,6 +21,128 @@ var wxs3 = wxs3 || {};
         return res.join('&');
     }
 
+    var WCSTile = function (dim, tileNr, bounds) {
+        this.dim = dim;
+        this.tileNr = tileNr;
+        this.bounds = bounds;
+        this.loaded = false;
+    };
+
+    WCSTile.prototype.getWcsBbox = function () {
+        return [
+            parseInt(this.bounds.minx, 10),
+            parseInt(this.bounds.miny - this.dim.proportionHeight, 10),
+            parseInt(this.bounds.maxx + this.dim.proportionWidth, 10),
+            parseInt(this.bounds.maxy, 10)
+        ].join(',');
+    };
+
+    WCSTile.prototype.load = function (callback) {
+
+        this.callback = callback;
+
+        var params = {
+            SERVICE: 'WCS',
+            VERSION: '1.0.0',
+            REQUEST: 'GetCoverage',
+            FORMAT: 'XYZ',
+            COVERAGE: this.dim.coverage,
+            bbox: this.getWcsBbox(),
+            CRS: this.dim.crs,
+            RESPONSE_CRS: this.dim.crs,
+            WIDTH: parseInt(this.dim.demWidth, 10),
+            HEIGHT: parseInt(this.dim.demHeight, 10)
+        };
+
+        var url = this.dim.wcsUrl + '?' + urlformat(params);
+
+        var demTileRequest = new XMLHttpRequest();
+        demTileRequest.open('GET', url, true);
+
+        var that = this;
+        demTileRequest.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                that.demTileLoaded(this.responseText);
+            }
+        };
+        demTileRequest.send();
+
+        //allows chaining
+        return this;
+    };
+
+    WCSTile.prototype.createGeometry = function (xyzlines) {
+
+        var geometry = new THREE.PlaneGeometry(
+            this.bounds.maxx - this.bounds.minx,
+            this.bounds.maxy - this.bounds.miny,
+            (this.dim.demWidth - 1),
+            (this.dim.demHeight - 1)
+        );
+
+        var i, length = geometry.vertices.length;
+        for (i = 0; i < length; i = i + 1) {
+            var line = xyzlines[i].split(' ');
+            geometry.vertices[i].x = line[0];
+            geometry.vertices[i].y = line[1];
+            geometry.vertices[i].z = line[2];
+        }
+        return geometry;
+    };
+
+    WCSTile.prototype.getWmsBbox = function () {
+
+        var lastIndex = this.geometry.vertices.length - 1;
+
+        var firstVertex = this.geometry.vertices[0];
+        var lastVertex = this.geometry.vertices[lastIndex];
+        return [
+            firstVertex.x,
+            lastVertex.y,
+            lastVertex.x,
+            firstVertex.y
+        ].join(',');
+    };
+
+    WCSTile.prototype.demTileLoaded = function (responseText) {
+        this.geometry = this.createGeometry(responseText.split("\n"));
+
+        this.plane = new THREE.Mesh(
+            this.geometry,
+            this.createMaterial()
+        );
+        this.plane.name = 'tile_' + this.tileNr;
+
+        this.loaded = true; //not used yet
+        this.callback(this);
+    };
+
+    WCSTile.prototype.createMaterial = function () {
+        var params = {
+            service: 'wms',
+            version: '1.3.0',
+            request: 'getmap',
+            crs: this.dim.crs,
+            srs: this.dim.crs,
+            WIDTH: this.dim.demWidth * this.dim.wmsMult,
+            HEIGHT: this.dim.demHeight * this.dim.wmsMult,
+            bbox: this.getWmsBbox(),
+            layers: this.dim.wmsLayers,
+            format: this.dim.wmsFormat + this.dim.wmsFormatMode
+        };
+
+        var material = new THREE.MeshPhongMaterial(
+            {
+                map: THREE.ImageUtils.loadTexture(
+                    this.dim.wmsUrl + '?' + urlformat(params),
+                    new THREE.UVMapping()
+                )
+            }
+        );
+        material.name = 'material_' + this.tileNr;
+        return material;
+    };
+
     var Wxs3 = function (layers, dim) {
 
         this.dim = dim;
@@ -55,7 +177,7 @@ var wxs3 = wxs3 || {};
             dim.zMult = proportionAverage;
         }
 
-        this.wmsLayers = layers;
+        this.dim.wmsLayers = layers;
 
         this.createRenderer();
         this.createScene();
@@ -121,138 +243,52 @@ var wxs3 = wxs3 || {};
         //TODO: generic tilematrix-parsing
         // Proof of concept with 2 subdivision in each dimention:
 
+        this.tiles = [];
+
         //0,0
-        this.addTile('x0_y0', {
-            minx: bounds.minx,
-            miny: bounds.miny,
-            maxx: (bounds.minx + bounds.maxx) / 2,
-            maxy: (bounds.miny + bounds.maxy) / 2
-        });
+        this.tiles.push(
+            new WCSTile(this.dim, 'x0_y0', {
+                minx: bounds.minx,
+                miny: bounds.miny,
+                maxx: (bounds.minx + bounds.maxx) / 2,
+                maxy: (bounds.miny + bounds.maxy) / 2
+            }).load(this.tileLoaded.bind(this))
+        );
 
         //1,0
-        this.addTile('x1_y0', {
-            minx: (bounds.minx + bounds.maxx) / 2,
-            miny: bounds.miny,
-            maxx: bounds.maxx,
-            maxy: (bounds.miny + bounds.maxy) / 2
-        });
+        this.tiles.push(
+            new WCSTile(this.dim, 'x1_y0', {
+                minx: (bounds.minx + bounds.maxx) / 2,
+                miny: bounds.miny,
+                maxx: bounds.maxx,
+                maxy: (bounds.miny + bounds.maxy) / 2
+            }).load(this.tileLoaded.bind(this))
+        );
 
         //0,1
-        this.addTile('x0_y1', {
-            minx: bounds.minx,
-            miny: (bounds.miny + bounds.maxy) / 2,
-            maxx: (bounds.minx + bounds.maxx) / 2,
-            maxy: bounds.maxy
-        });
+        this.tiles.push(
+            new WCSTile(this.dim, 'x0_y1', {
+                minx: bounds.minx,
+                miny: (bounds.miny + bounds.maxy) / 2,
+                maxx: (bounds.minx + bounds.maxx) / 2,
+                maxy: bounds.maxy
+            }).load(this.tileLoaded.bind(this))
+        );
 
         //1,1
-        this.addTile('x1_y1', {
-            minx: (bounds.minx + bounds.maxx) / 2,
-            miny: (bounds.miny + bounds.maxy) / 2,
-            maxx: bounds.maxx,
-            maxy: bounds.maxy
-        });
+        this.tiles.push(
+            new WCSTile(this.dim, 'x1_y1', {
+                minx: (bounds.minx + bounds.maxx) / 2,
+                miny: (bounds.miny + bounds.maxy) / 2,
+                maxx: bounds.maxx,
+                maxy: bounds.maxy
+            }).load(this.tileLoaded.bind(this))
+        );
     };
 
-    Wxs3.prototype.addTile = function (tileNr, bounds) {
-
-        var bboxWCS = [
-            parseInt(bounds.minx, 10),
-            parseInt(bounds.miny - this.dim.proportionHeight, 10),
-            parseInt(bounds.maxx + this.dim.proportionWidth, 10),
-            parseInt(bounds.maxy, 10)
-        ].join(',');
-
-
-        var params = {
-            SERVICE: 'WCS',
-            VERSION: '1.0.0',
-            REQUEST: 'GetCoverage',
-            FORMAT: 'XYZ',
-            COVERAGE: this.dim.coverage,
-            bbox: bboxWCS,
-            CRS: this.dim.crs,
-            RESPONSE_CRS: this.dim.crs,
-            WIDTH: parseInt(this.dim.demWidth, 10),
-            HEIGHT: parseInt(this.dim.demHeight, 10)
-        };
-
-        var url = this.dim.wcsUrl + '?' + urlformat(params);
-
-        var demTileRequest = new XMLHttpRequest();
-        demTileRequest.open('GET', url, true);
-
-        var that = this;
-        demTileRequest.onreadystatechange = function () {
-            if (this.readyState === 4) {
-                that.demTileLoaded(tileNr, bounds, this.responseText);
-            }
-        };
-        demTileRequest.send();
-    };
-
-    Wxs3.prototype.demTileLoaded = function (tileNr, bounds, responseText) {
-
-        var minxWMS, minyWMS, maxxWMS, maxyWMS;
-        var geometry = new THREE.PlaneGeometry(
-            bounds.maxx - bounds.minx,
-            bounds.maxy - bounds.miny,
-            (this.dim.demWidth - 1),
-            (this.dim.demHeight - 1)
-        );
-
-        var i, l;
-        var lines = responseText.split("\n");
-        for (i = 0, l = geometry.vertices.length; i < l; i++) {
-            geometry.vertices[i].x = lines[i].split(' ')[0];
-            geometry.vertices[i].y = lines[i].split(' ')[1];
-            geometry.vertices[i].z = lines[i].split(' ')[2];
-            if (i === 0) {
-                minxWMS = geometry.vertices[i].x;
-                maxyWMS = geometry.vertices[i].y;
-            }
-            if (i === l - 1) {
-                maxxWMS = geometry.vertices[i].x;
-                minyWMS = geometry.vertices[i].y;
-            }
-        }
-        var bboxWMS = [minxWMS, minyWMS, maxxWMS, maxyWMS].join(',');
-
-        var plane = new THREE.Mesh(
-            geometry,
-            this.createMaterial(bboxWMS, tileNr)
-        );
-        plane.name = 'tile_' + tileNr;
-        this.scene.add(plane);
-
+    Wxs3.prototype.tileLoaded = function (tile) {
+        this.scene.add(tile.plane);
         this.render();
-    };
-
-    Wxs3.prototype.createMaterial = function (bboxWMS, tileNr) {
-
-        var params = {
-            service: 'wms',
-            version: '1.3.0',
-            request: 'getmap',
-            crs: this.dim.crs,
-            srs: this.dim.crs,
-            WIDTH: this.dim.demWidth * this.dim.wmsMult,
-            HEIGHT: this.dim.demHeight * this.dim.wmsMult,
-            bbox: bboxWMS,
-            layers: this.wmsLayers,
-            format: this.dim.wmsFormat + this.dim.wmsFormatMode
-        };
-
-        var material = new THREE.MeshPhongMaterial(
-            {
-                map: THREE.ImageUtils.loadTexture(
-                    this.dim.wmsUrl + '?' + urlformat(params),
-                    new THREE.UVMapping()
-                )
-            }
-        );
-        material.name = 'material_' + tileNr;
-        return material;
     };
 
     // extraction for URL parameters
