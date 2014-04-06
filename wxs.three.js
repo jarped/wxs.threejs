@@ -18,14 +18,21 @@ var wxs3 = wxs3 || {};
         this.controls = null;
 
         if (dim.metersWidth > dim.metersHeight) {
-            dim.demWidth = parseInt((dim.metersWidth / dim.metersHeight) * dim.demWidth, 10);
+            var widthHeightRatio = dim.metersWidth / dim.metersHeight;
+            dim.demWidth = parseInt(widthHeightRatio * dim.demWidth, 10);
         } else if (dim.metersWidth < dim.metersHeight) {
-            dim.demHeight = parseInt((dim.metersHeight / dim.metersWidth) * dim.demHeight, 10);
+            var heightWidthRatio = dim.metersHeight / dim.metersWidth;
+            dim.demHeight = parseInt(heightWidthRatio * dim.demHeight, 10);
         }
 
-        dim.proportionWidth = dim.metersWidth / dim.demWidth; // mapunits between vertexes in x-dimention
-        dim.proportionHeight = dim.metersHeight / dim.demHeight; // mapunits between vertexes in y-dimention
-        var proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2); // average mapunits between vertexes
+        // mapunits between vertexes in x-dimention
+        dim.proportionWidth = dim.metersWidth / dim.demWidth;
+
+        // mapunits between vertexes in y-dimention
+        dim.proportionHeight = dim.metersHeight / dim.demHeight;
+
+        // average mapunits between vertexes
+        var proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2);
 
         if (dim.zInv) {
             proportionAverage *= -1;
@@ -41,10 +48,7 @@ var wxs3 = wxs3 || {};
         this.createRenderer();
         this.createScene();
         this.createCamera();
-
-        this.controls = new THREE.TrackballControls(this.camera);
-        // Point camera directly down
-        this.controls.target = new THREE.Vector3((dim.minx + dim.maxx) / 2, (dim.miny + dim.maxy) / 2, 0);
+        this.createControls();
 
         // Generate tiles and boundingboxes
         this.bbox2tiles(dim.minx, dim.miny, dim.maxx, dim.maxy);
@@ -63,12 +67,31 @@ var wxs3 = wxs3 || {};
 
     Wxs3.prototype.createCamera = function () {
         var fov = 45;
-        this.camera = new THREE.PerspectiveCamera(fov, this.dim.width / this.dim.height, 0.1, 20000);
+        this.camera = new THREE.PerspectiveCamera(
+            fov,
+            this.dim.width / this.dim.height,
+            0.1,
+            20000
+        );
         // Some trig to find height for camera
-        var cameraHeight = this.dim.Z || (this.dim.metersHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
+        var cameraHeight;
+        if (this.dim.Z) {
+            cameraHeight = this.dim.Z;
+        } else {
+            cameraHeight = (this.dim.metersHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
+        }
         // Place camera in middle of bbox
-        this.camera.position.set((this.dim.minx + this.dim.maxx) / 2, (this.dim.miny + this.dim.maxy) / 2, cameraHeight);
+        var centerX = (this.dim.minx + this.dim.maxx) / 2;
+        var centerY = (this.dim.miny + this.dim.maxy) / 2;
+        this.camera.position.set(centerX, centerY, cameraHeight);
+    };
 
+    Wxs3.prototype.createControls = function () {
+        this.controls = new THREE.TrackballControls(this.camera);
+        // Point camera directly down
+        var centerX = (this.dim.minx + this.dim.maxx) / 2;
+        var centerY = (this.dim.miny + this.dim.maxy) / 2;
+        this.controls.target = new THREE.Vector3(centerX, centerY, 0);
     };
 
     Wxs3.prototype.render = function () {
@@ -235,7 +258,7 @@ var wxs3 = wxs3 || {};
         proportionHeight: 0
     }.init();
 
-    var layers = getQueryVariable("LAYERS") || layers;
-    var wxs3 = new Wxs3(layers, dim);
+    var wmsLayers = getQueryVariable("LAYERS") || layers;
+    var wxs3 = new Wxs3(wmsLayers, dim);
 
 }());
