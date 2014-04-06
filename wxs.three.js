@@ -31,7 +31,7 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
-        var cameraHeight, fov, proportionAverage;
+        var proportionAverage;
 
         if (dim.metersWidth > dim.metersHeight) {
             dim.demWidth = parseInt((dim.metersWidth / dim.metersHeight) * dim.demWidth, 10);
@@ -56,21 +56,12 @@ var wxs3 = wxs3 || {};
             dim.wmsFormatMode = '; mode=' + getQueryVariable("WMSFORMATMODE");
         }
 
-        // We've defined some standardlayers for the default wms-service in topo2.layers.js. Overwrite them if defined in url.
         this.wmsLayers = layers;
 
-        this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setSize(dim.width, dim.height);
+        this.createRenderer();
+        this.createScene();
 
-        this.scene = new THREE.Scene();
-        this.scene.add(new THREE.AmbientLight(0xeeeeee));
 
-        fov = 45;
-        this.camera = new THREE.PerspectiveCamera(fov, dim.width / dim.height, 0.1, 20000);
-        // Some trig to find height for camera
-        cameraHeight = getQueryVariable("Z") || (dim.metersHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
-        // Place camera in middle of bbox
-        this.camera.position.set((dim.minx + dim.maxx) / 2, (dim.miny + dim.maxy) / 2, cameraHeight);
         this.controls = new THREE.TrackballControls(this.camera);
         // Point camera directly down
         this.controls.target = new THREE.Vector3((dim.minx + dim.maxx) / 2, (dim.miny + dim.maxy) / 2, 0);
@@ -78,6 +69,26 @@ var wxs3 = wxs3 || {};
         // Generate tiles and boundingboxes
         this.bbox2tiles(dim.minx, dim.miny, dim.maxx, dim.maxy);
         document.getElementById('webgl').appendChild(this.renderer.domElement);
+    };
+
+    Wxs3.prototype.createRenderer = function () {
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(this.dim.width, this.dim.height);
+    };
+
+    Wxs3.prototype.createScene = function () {
+        this.scene = new THREE.Scene();
+        this.scene.add(new THREE.AmbientLight(0xeeeeee));
+    };
+
+    Wxs3.prototype.createCamera = function () {
+        var fov = 45;
+        this.camera = new THREE.PerspectiveCamera(fov, this.dim.width / this.dim.height, 0.1, 20000);
+        // Some trig to find height for camera
+        var cameraHeight = this.dim.Z || (this.dim.metersHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
+        // Place camera in middle of bbox
+        this.camera.position.set((this.dim.minx + this.dim.maxx) / 2, (this.dim.miny + this.dim.maxy) / 2, cameraHeight);
+
     };
 
     Wxs3.prototype.render = function () {
@@ -221,6 +232,7 @@ var wxs3 = wxs3 || {};
         wmsFormatMode: "",
         zInv: getQueryVariable("ZINV") || false,
         zMult: getQueryVariable("ZMULT"),
+        Z: getQueryVariable("Z") || null,
         proportionWidth: 0,
         proportionHeight: 0
     }.init();
