@@ -151,6 +151,9 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
+
+        //TODO: these shpuld be moved to separate functions to improve
+        //readability. I'm not quite certiain how to name these functions
         if (dim.metersWidth > dim.metersHeight) {
             var widthHeightRatio = dim.metersWidth / dim.metersHeight;
             dim.demWidth = parseInt(widthHeightRatio * dim.demWidth, 10);
@@ -159,10 +162,10 @@ var wxs3 = wxs3 || {};
             dim.demHeight = parseInt(heightWidthRatio * dim.demHeight, 10);
         }
 
-        // mapunits between vertexes in x-dimention
+        // mapunits between vertexes in x-dimension
         dim.proportionWidth = dim.metersWidth / dim.demWidth;
 
-        // mapunits between vertexes in y-dimention
+        // mapunits between vertexes in y-dimension
         dim.proportionHeight = dim.metersHeight / dim.demHeight;
 
         // average mapunits between vertexes
@@ -236,7 +239,7 @@ var wxs3 = wxs3 || {};
 
     Wxs3.prototype.bbox2tiles = function (bounds) {
         //TODO: generic tilematrix-parsing
-        // Proof of concept with 2 subdivision in each dimention:
+        // Proof of concept with 2 subdivision in each dimension:
 
         this.tiles = [];
 
