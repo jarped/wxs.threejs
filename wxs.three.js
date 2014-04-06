@@ -9,6 +9,18 @@ var wxs3 = wxs3 || {};
         window.location = "http://get.webgl.org";
     }
 
+    //utility func to convert dict of {key: "val", key2: "val2"} to key=val&key2=val2
+    function urlformat(values) {
+        var res = [], key;
+        for (key in values) {
+            if (values.hasOwnProperty(key)) {
+                var value = values[key];
+                res.push(key + '=' + value);
+            }
+        }
+        return res.join('&');
+    }
+
     var Wxs3 = function (layers, dim) {
 
         this.dim = dim;
@@ -101,7 +113,7 @@ var wxs3 = wxs3 || {};
 
     Wxs3.prototype.render = function () {
         this.controls.update();
-        requestAnimationFrame(this.render.bind(this));
+        window.requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
     };
 
@@ -151,17 +163,21 @@ var wxs3 = wxs3 || {};
             parseInt(bounds.maxy, 10)
         ].join(',');
 
-        var url = 'http://openwms.statkart.no/skwms1/wcs.dtm?' +
-            'SERVICE=WCS' +
-            '&VERSION=1.0.0' +
-            '&REQUEST=GetCoverage' +
-            '&FORMAT=XYZ' +
-            '&COVERAGE=' + this.dim.coverage +
-            '&bbox=' + bboxWCS +
-            '&CRS=' + this.dim.crs +
-            '&RESPONSE_CRS=' + this.dim.crs +
-            '&WIDTH=' + parseInt(this.dim.demWidth, 10) +
-            '&HEIGHT=' + parseInt(this.dim.demHeight, 10);
+
+        var params = {
+            SERVICE: 'WCS',
+            VERSION: '1.0.0',
+            REQUEST: 'GetCoverage',
+            FORMAT: 'XYZ',
+            COVERAGE: this.dim.coverage,
+            bbox: bboxWCS,
+            CRS: this.dim.crs,
+            RESPONSE_CRS: this.dim.crs,
+            WIDTH: parseInt(this.dim.demWidth, 10),
+            HEIGHT: parseInt(this.dim.demHeight, 10)
+        };
+
+        var url = this.dim.wcsUrl + '?' + urlformat(params);
 
         var demTileRequest = new XMLHttpRequest();
         demTileRequest.open('GET', url, true);
@@ -213,20 +229,24 @@ var wxs3 = wxs3 || {};
     };
 
     Wxs3.prototype.createMaterial = function (bboxWMS, tileNr) {
+
+        var params = {
+            service: 'wms',
+            version: '1.3.0',
+            request: 'getmap',
+            crs: this.dim.crs,
+            srs: this.dim.crs,
+            WIDTH: this.dim.demWidth * this.dim.wmsMult,
+            HEIGHT: this.dim.demHeight * this.dim.wmsMult,
+            bbox: bboxWMS,
+            layers: this.wmsLayers,
+            format: this.dim.wmsFormat + this.dim.wmsFormatMode
+        };
+
         var material = new THREE.MeshPhongMaterial(
             {
                 map: THREE.ImageUtils.loadTexture(
-                    this.dim.wms + '?' +
-                        'service=wms' +
-                        '&version=1.3.0' +
-                        '&request=getmap' +
-                        '&crs=' + this.dim.crs +
-                        '&srs=' + this.dim.crs +
-                        '&WIDTH=' + this.dim.demWidth * this.dim.wmsMult +
-                        '&HEIGHT=' + this.dim.demHeight * this.dim.wmsMult +
-                        '&bbox=' + bboxWMS +
-                        '&layers=' + this.wmsLayers +
-                        '&format=' + this.dim.wmsFormat + this.dim.wmsFormatMode,
+                    this.dim.wmsUrl + '?' + urlformat(params),
                     new THREE.UVMapping()
                 )
             }
@@ -276,7 +296,8 @@ var wxs3 = wxs3 || {};
         },
         crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
         coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
-        wms: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
+        wmsUrl: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
+        wcsUrl: 'http://openwms.statkart.no/skwms1/wcs.dtm',
         wmsMult: getQueryVariable("WMSMULT") || 5,
         wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
         wmsFormatMode: "",
