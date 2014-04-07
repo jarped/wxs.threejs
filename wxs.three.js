@@ -85,7 +85,7 @@ var wxs3 = wxs3 || {};
             var line = xyzlines[i].split(' ');
             geometry.vertices[i].x = line[0];
             geometry.vertices[i].y = line[1];
-            geometry.vertices[i].z = line[2] * this.dim.zMult;
+            geometry.vertices[i].z = line[2] ;
         }
         return geometry;
     };
@@ -112,7 +112,7 @@ var wxs3 = wxs3 || {};
             this.createMaterial()
         );
         this.plane.name = 'tile_' + this.tileNr;
-
+        this.plane.scale.z=dim.zMult;
         this.loaded = true; //not used yet
         this.callback(this);
     };
