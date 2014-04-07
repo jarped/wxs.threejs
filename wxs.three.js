@@ -85,7 +85,7 @@ var wxs3 = wxs3 || {};
             var line = xyzlines[i].split(' ');
             geometry.vertices[i].x = line[0];
             geometry.vertices[i].y = line[1];
-            geometry.vertices[i].z = line[2];
+            geometry.vertices[i].z = line[2] * this.dim.zMult;
         }
         return geometry;
     };
@@ -168,18 +168,6 @@ var wxs3 = wxs3 || {};
         // mapunits between vertexes in y-dimension
         dim.proportionHeight = dim.metersHeight / dim.demHeight;
 
-        // average mapunits between vertexes
-        var proportionAverage = ((dim.proportionWidth + dim.proportionHeight) / 2);
-
-        if (dim.zInv) {
-            proportionAverage *= -1;
-        }
-        if (dim.zMult) {
-            dim.zMult = proportionAverage / dim.zMult;
-        } else {
-            dim.zMult = proportionAverage;
-        }
-
         this.dim.wmsLayers = layers;
 
         this.createRenderer();
@@ -208,7 +196,7 @@ var wxs3 = wxs3 || {};
             fov,
             this.dim.width / this.dim.height,
             0.1,
-            20000
+            50000
         );
         // Some trig to find height for camera
         var cameraHeight;
@@ -344,8 +332,7 @@ var wxs3 = wxs3 || {};
         wmsMult: getQueryVariable("WMSMULT") || 5,
         wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
         wmsFormatMode: "",
-        zInv: getQueryVariable("ZINV") || false,
-        zMult: getQueryVariable("ZMULT"),
+        zMult: getQueryVariable("ZMULT")||1,
         Z: getQueryVariable("Z") || null,
         proportionWidth: 0,
         proportionHeight: 0
