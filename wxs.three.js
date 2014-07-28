@@ -239,11 +239,15 @@ var wxs3 = wxs3 || {};
 			var capabilitiesText=client.responseText;
 			var capabilitiesXml=txt2xml(capabilitiesText);
 			tileMatrixSet=parseCapabilities(capabilitiesXml);
-			console.log(tileMatrixSet);
+			console.log(tileMatrixSet['EPSG:32633:11']);
+			//console.log(tileMatrixSet);
 			console.log(bounds);
-			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)/2));
-			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)/2));
-			//console.log(tileMatrixSet['EPSG:32633:0'].TopLeftCorner);
+			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
+			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
+                        console.log('TileCol: ' + String(Math.floor((bounds.minx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX)));
+                        console.log('TileRow: ' + String(Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet['EPSG:32633:11'].TileSpanY)));
+
+		
             }
 	}
 	client.send();
@@ -402,10 +406,10 @@ var wxs3 = wxs3 || {};
 											minx: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[0]) ,
 											maxy: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[1]) ,
 										},
-										//TileWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
-										//TileHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML,
-										//MatrixWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML,
-										//MatrixHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML,
+										TileWidth: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML),
+										TileHeight: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML),
+										MatrixWidth: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML),
+										MatrixHeight: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML),
 										TileSpanX: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
 										TileSpanY: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML
 									};
