@@ -242,6 +242,7 @@ var wxs3 = wxs3 || {};
 			console.log(tileMatrixSet['EPSG:32633:11']);
 			//console.log(tileMatrixSet);
 			console.log(bounds);
+			// TODO: figure out which queryspan is the smallest. Derrive tilematrix (zoom) by finding the first with smaller tilespan in that dimension.
 			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
 			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
                         var tileColMin=Math.floor((bounds.minx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX);
