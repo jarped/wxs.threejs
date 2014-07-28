@@ -244,8 +244,20 @@ var wxs3 = wxs3 || {};
 			console.log(bounds);
 			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
 			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
-                        console.log('TileCol: ' + String(Math.floor((bounds.minx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX)));
-                        console.log('TileRow: ' + String(Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet['EPSG:32633:11'].TileSpanY)));
+                        var tileColMin=Math.floor((bounds.minx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX);
+                        var tileRowMin=Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet['EPSG:32633:11'].TileSpanY);
+                        var tileColMax=Math.floor((bounds.maxx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX);
+                        var tileRowMax=Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.miny)/tileMatrixSet['EPSG:32633:11'].TileSpanY);
+			console.log('TileColMin: ' + tileColMin);
+			console.log('TileRowMin: ' + tileRowMin);
+			console.log('TileColMax: ' + tileColMax);
+			console.log('TileRowMax: ' + tileRowMax);
+			var tileCols=tileColMax-tileColMin+1;
+			var tileRows=tileRowMax-tileRowMin+1;
+			console.log('TileCols: ' + tileCols);
+			console.log('TileRows: ' + tileRows);
+			var totalCalls=tileCols*tileRows;
+			console.log('TotalCalls: ' + totalCalls);
 
 		
             }
