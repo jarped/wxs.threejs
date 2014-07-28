@@ -229,6 +229,22 @@ var wxs3 = wxs3 || {};
         //TODO: generic tilematrix-parsing
         // Proof of concept with 2 subdivision in each dimension:
 
+	var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
+	var client = new XMLHttpRequest();
+	var tileMatrixSet={};
+	client.open('GET', capabilitiesURL);
+	client.onreadystatechange = function() {
+		if (this.readyState === 4) {
+			// Start timing
+			console.time('capabilities parsing');
+			var capabilitiesText=client.responseText;
+			var capabilitiesXml=txt2xml(capabilitiesText);
+			tileMatrixSet=parseCapabilities(capabilitiesXml);
+			console.log(tileMatrixSet);
+            }
+	}
+	client.send();
+		
         this.tiles = [];
 
         //0,0
@@ -342,4 +358,71 @@ var wxs3 = wxs3 || {};
     var wmsLayers = getQueryVariable("LAYERS") || layers;
     var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
+    function parseCapabilities(capabilitiesXml) {
+	var tileMatrixSetDict=[];
+	var layers=capabilitiesXml.getElementsByTagName("Layer");
+	//TODO: This fetches tileMatrixes we don't need: 
+	var tileMatrixSets=capabilitiesXml.getElementsByTagName("TileMatrixSet");
+	var layersCount=layers.length;
+	// Iterate through all layers
+	for (var layer=0; layer<layersCount; layer++) {
+		//Check for layer specified
+		//TODO: should be evaluated against wxs url-parameters
+		if (layers[layer].getElementsByTagName('Identifier')[0].innerHTML=='topo2'){
+			var activeLayer=layers[layer];
+			var layerTileMatrixSets=activeLayer.getElementsByTagName('TileMatrixSetLink');
+			var layerTileMatrixCount=layerTileMatrixSets.length;
+			// Iterate through all tilematrixsets allowed for layer
+			for (var layerTileMatrix=0; layerTileMatrix<layerTileMatrixCount; layerTileMatrix++){
+				//Check for specified crs
+				//TODO: should be evaluated against wxs url-parameters
+				if (layerTileMatrixSets[layerTileMatrix].getElementsByTagName('TileMatrixSet')[0].innerHTML=='EPSG:32633'){
+					//console.log(layerTileMatrixSets[layerTileMatrix].getElementsByTagName('TileMatrixSet')[0].innerHTML);
+					var tileMatrixSetsCount=tileMatrixSets.length;
+					// We've now verified that the specified layer supports the specified crs. Time to fetch the actual tilematrixset
+					for (var tileMatrixSet=0; tileMatrixSet<tileMatrixSetsCount; tileMatrixSet++)
+					{
+						// Neccessary hack since we fetch too many tilematrixes
+						if(tileMatrixSets[tileMatrixSet].getElementsByTagName('Identifier').length >0){
+							//Check for specified crs
+							if (tileMatrixSets[tileMatrixSet].getElementsByTagName('Identifier')[0].innerHTML=='EPSG:32633'){
+								var tileMatrix=tileMatrixSets[tileMatrixSet].getElementsByTagName('TileMatrix');
+								var tileMatrixCount=tileMatrix.length;
+								// Iterate through all matrixes for crs
+								for (var tileMatrixIndex=0;tileMatrixIndex<tileMatrixCount; tileMatrixIndex++){
+								
+									tileMatrixSetDict.push(
+									{
+									Identifier: tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML,
+									ScaleDenominator: tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML,
+									TopLeftCorner: tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML,
+									TileWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
+									TileHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML,
+									MatrixWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML,
+									MatrixHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML
+									});
+								}
+								console.timeEnd('capabilities parsing');
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return tileMatrixSetDict;
+    }
+    function txt2xml(xmltxt) {
+	if(window.DOMParser){
+	    // non i.e. browser
+	    var xmlparser = new DOMParser();
+	    var xmlDoc = xmlparser.parseFromString(xmltxt, "text/xml");
+	}else{
+	    // i.e. browser 
+	    var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+	    xmlDoc.async = false;
+	    xmlDoc.loadXML(xmltxt);
+}
+return xmlDoc;
+};
 }(wxs3));
