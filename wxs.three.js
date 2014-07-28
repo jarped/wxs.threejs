@@ -227,7 +227,6 @@ var wxs3 = wxs3 || {};
 
     ns.ThreeDMap.prototype.bbox2tiles = function (bounds) {
         //TODO: generic tilematrix-parsing
-        // Proof of concept with 2 subdivision in each dimension:
 
 	var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
 	var client = new XMLHttpRequest();
@@ -241,10 +240,16 @@ var wxs3 = wxs3 || {};
 			var capabilitiesXml=txt2xml(capabilitiesText);
 			tileMatrixSet=parseCapabilities(capabilitiesXml);
 			console.log(tileMatrixSet);
+			console.log(bounds);
+			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)/2));
+			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)/2));
+			//console.log(tileMatrixSet['EPSG:32633:0'].TopLeftCorner);
             }
 	}
 	client.send();
-		
+
+
+        // Proof of concept with 2 subdivision in each dimension:
         this.tiles = [];
 
         //0,0
@@ -359,7 +364,8 @@ var wxs3 = wxs3 || {};
     var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
     function parseCapabilities(capabilitiesXml) {
-	var tileMatrixSetDict=[];
+	var tileMatrixSetDict={};
+	var pixelsize=0.00028;
 	var layers=capabilitiesXml.getElementsByTagName("Layer");
 	//TODO: This fetches tileMatrixes we don't need: 
 	var tileMatrixSets=capabilitiesXml.getElementsByTagName("TileMatrixSet");
@@ -390,17 +396,19 @@ var wxs3 = wxs3 || {};
 								var tileMatrixCount=tileMatrix.length;
 								// Iterate through all matrixes for crs
 								for (var tileMatrixIndex=0;tileMatrixIndex<tileMatrixCount; tileMatrixIndex++){
-								
-									tileMatrixSetDict.push(
-									{
-									Identifier: tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML,
-									ScaleDenominator: tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML,
-									TopLeftCorner: tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML,
-									TileWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
-									TileHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML,
-									MatrixWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML,
-									MatrixHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML
-									});
+									tileMatrixSetDict[tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML]= {
+										ScaleDenominator: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML),
+										TopLeftCorner: { 
+											minx: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[0]) ,
+											maxy: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[1]) ,
+										},
+										//TileWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
+										//TileHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML,
+										//MatrixWidth: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML,
+										//MatrixHeight: tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML,
+										TileSpanX: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
+										TileSpanY: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML
+									};
 								}
 								console.timeEnd('capabilities parsing');
 							}
