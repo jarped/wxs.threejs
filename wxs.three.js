@@ -177,6 +177,8 @@ var wxs3 = wxs3 || {};
 
         // Generate tiles and boundingboxes
         this.bbox2tiles(this.dim.getBounds());
+        //var wmtsCalls=this.bbox2tiles(this.dim.getBounds());
+		//this.tileLoader(wmtsCalls);
         document.getElementById('webgl').appendChild(this.renderer.domElement);
     };
 
@@ -226,100 +228,84 @@ var wxs3 = wxs3 || {};
     };
 
     ns.ThreeDMap.prototype.bbox2tiles = function (bounds) {
-        //TODO: generic tilematrix-parsing
+		var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
+		var client = new XMLHttpRequest();
+		var tileMatrixSet={};
+		var wmtsCalls=[];
+		client.open('GET', capabilitiesURL);
+		client.onreadystatechange = function() {
+			if (this.readyState === 4) {
+				// Start timing
+				console.time('capabilities parsing');
+				var capabilitiesText=client.responseText;
+				var capabilitiesXml=txt2xml(capabilitiesText);
+				tileMatrixSet=parseCapabilities(capabilitiesXml);
 
-	var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
-	var client = new XMLHttpRequest();
-	var tileMatrixSet={};
-	client.open('GET', capabilitiesURL);
-	client.onreadystatechange = function() {
-		if (this.readyState === 4) {
-			// Start timing
-			console.time('capabilities parsing');
-			var capabilitiesText=client.responseText;
-			var capabilitiesXml=txt2xml(capabilitiesText);
-			tileMatrixSet=parseCapabilities(capabilitiesXml);
-			// TODO: figure out which queryspan is the smallest. Derrive tilematrix (zoom) by finding the first with smaller tilespan in that dimension.
-			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
-			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
-			var querySpanX=bounds.maxx-bounds.minx;
-			var querySpanY=bounds.maxy-bounds.miny;
-			var querySpanMin;
-			var querySpanMinDim;
+				var querySpanX=bounds.maxx-bounds.minx;
+				var querySpanY=bounds.maxy-bounds.miny;
+				var querySpanMin;
+				var querySpanMinDim;
 			
-			if (querySpanX>querySpanY){
-				querySpanMin=querySpanY;
-				querySpanMinDim='y';
-			}
-			else{
-				querySpanMin=querySpanX;
-				querySpanMinDim='x';
-			}
-			var tileMatrixCount=tileMatrixSet.length;
-			var activeMatrix;
-			//console.log(tileMatrixSet)	
-			// Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
-			// We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-			for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
-				if(querySpanMinDim='x')
-					if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
-						activeMatrix=tileMatrixSet[tileMatrix];
-						break;
-					}
-				else
-					if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
-						activeMatrix=tileMatrixSet[tileMatrix];
-						break;
-					}
-			}
-			console.log('QuerySpanMin: '+querySpanMin)
-			console.log(activeMatrix);
-			//console.log(tileMatrixSet);
-			console.log(bounds);
-                        var tileColMin=Math.floor((bounds.minx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
-                        var tileRowMin=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.maxy)/activeMatrix.TileSpanY);
-                        var tileColMax=Math.floor((bounds.maxx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
-                        var tileRowMax=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.miny)/activeMatrix.TileSpanY);
-			/*
-			console.log('TileColMin: ' + tileColMin);
-			console.log('TileRowMin: ' + tileRowMin);
-			console.log('TileColMax: ' + tileColMax);
-			console.log('TileRowMax: ' + tileRowMax);
-			*/
-			var tileCols=tileColMax-tileColMin+1;
-			var tileRows=tileRowMax-tileRowMin+1;
-			console.log('TileCols: ' + tileCols);
-			console.log('TileRows: ' + tileRows);
-			var totalCalls=tileCols*tileRows;
-			console.log('TotalCalls: ' + totalCalls);
-			var wmtsCalls=[];
-			// Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
-			for (var tc=tileColMin;tc<=tileColMax;tc++){
-				for (var tr=tileRowMin;tr<=tileRowMax;tr++){
-					wmtsCalls.push({
-						tileRow: tr,
-						tileCol: tc,
-						url: {
-							wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
-							wms: '' 
-						},
-						bounds: {
-							minx: parseFloat(activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX)),
-							miny: activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY),
-							maxx: activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX),
-							maxy: activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY)
-						}
-					});
+				if (querySpanX>querySpanY){
+					querySpanMin=querySpanY;
+					querySpanMinDim='y';
 				}
-			}
-			console.log(wmtsCalls);
-            }
-	}
-	client.send();
+				else{
+					querySpanMin=querySpanX;
+					querySpanMinDim='x';
+				}
+				var tileMatrixCount=tileMatrixSet.length;
+				var activeMatrix;
+				// Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
+				// We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
+				for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
+					if(querySpanMinDim='x')
+						if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+							activeMatrix=tileMatrixSet[tileMatrix];
+							break;
+						}
+					else
+						if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+							activeMatrix=tileMatrixSet[tileMatrix];
+							break;
+						}
+				}
 
+	            var tileColMin=Math.floor((bounds.minx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+    	        var tileRowMin=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.maxy)/activeMatrix.TileSpanY);
+        	    var tileColMax=Math.floor((bounds.maxx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+            	var tileRowMax=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.miny)/activeMatrix.TileSpanY);
+
+				// Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
+				for (var tc=tileColMin;tc<=tileColMax;tc++){
+					for (var tr=tileRowMin;tr<=tileRowMax;tr++){
+						wmtsCalls.push({
+							tileRow: tr,
+							tileCol: tc,
+							url: {
+								wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
+								wms: '' 
+							},
+							bounds: {
+								minx: activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX),
+								miny: activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY),
+								maxx: activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX),
+								maxy: activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY)
+							}
+						});
+					}
+				}
+			console.log(wmtsCalls);
+			return wmtsCalls;
+    		}
+			
+		}
+		client.send();
 
         // Proof of concept with 2 subdivision in each dimension:
-        this.tiles = [];
+
+
+	    this.tiles = [];
 
         //0,0
         this.tiles.push(
@@ -360,8 +346,22 @@ var wxs3 = wxs3 || {};
                 maxy: bounds.maxy
             }).load(this.tileLoaded.bind(this))
         );
+
     };
 
+    ns.ThreeDMap.prototype.tileLoader = function (wmtsCalls) {
+        this.tiles = [];
+		for (var i = 0; i<wmtsCalls.length;i++){	
+			this.tiles.push(
+	            new WCSTile(this.dim, wmtsCalls[i].tileCol+'_'+wmtsCalls[i].tileRow, {
+        	        minx: wmtsCalls[i].bounds.minx,
+                	miny: wmtsCalls[i].bounds.miny,
+	                maxx: wmtsCalls[i].bounds.maxx,
+        	        maxy: wmtsCalls[i].bounds.maxy
+	            }).load(this.tileLoaded.bind(this))
+			)
+		};
+    };
     ns.ThreeDMap.prototype.tileLoaded = function (tile) {
         this.scene.add(tile.plane);
         this.render();
