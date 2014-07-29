@@ -240,32 +240,79 @@ var wxs3 = wxs3 || {};
 			var capabilitiesXml=txt2xml(capabilitiesText);
 			tileMatrixSet=parseCapabilities(capabilitiesXml);
 			// TODO: figure out which queryspan is the smallest. Derrive tilematrix (zoom) by finding the first with smaller tilespan in that dimension.
-			var activeMatrix='EPSG:32633:11';
-			console.log(tileMatrixSet[activeMatrix]);
-			//console.log(tileMatrixSet);
-			console.log(bounds);
 			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
 			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
-                        var tileColMin=Math.floor((bounds.minx-tileMatrixSet[activeMatrix].TopLeftCorner.minx)/tileMatrixSet[activeMatrix].TileSpanX);
-                        var tileRowMin=Math.floor((tileMatrixSet[activeMatrix].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet[activeMatrix].TileSpanY);
-                        var tileColMax=Math.floor((bounds.maxx-tileMatrixSet[activeMatrix].TopLeftCorner.minx)/tileMatrixSet[activeMatrix].TileSpanX);
-                        var tileRowMax=Math.floor((tileMatrixSet[activeMatrix].TopLeftCorner.maxy-bounds.miny)/tileMatrixSet[activeMatrix].TileSpanY);
+			var querySpanX=bounds.maxx-bounds.minx;
+			var querySpanY=bounds.maxy-bounds.miny;
+			var querySpanMin;
+			var querySpanMinDim;
+			
+			if (querySpanX>querySpanY){
+				querySpanMin=querySpanY;
+				querySpanMinDim='y';
+			}
+			else{
+				querySpanMin=querySpanX;
+				querySpanMinDim='x';
+			}
+			var tileMatrixCount=tileMatrixSet.length;
+			var activeMatrix;
+			//console.log(tileMatrixSet)	
+			// Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
+			// We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
+			for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
+				if(querySpanMinDim='x')
+					if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+						activeMatrix=tileMatrixSet[tileMatrix];
+						break;
+					}
+				else
+					if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+						activeMatrix=tileMatrixSet[tileMatrix];
+						break;
+					}
+			}
+			console.log('QuerySpanMin: '+querySpanMin)
+			console.log(activeMatrix);
+			//console.log(tileMatrixSet);
+			console.log(bounds);
+                        var tileColMin=Math.floor((bounds.minx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+                        var tileRowMin=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.maxy)/activeMatrix.TileSpanY);
+                        var tileColMax=Math.floor((bounds.maxx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+                        var tileRowMax=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.miny)/activeMatrix.TileSpanY);
+			/*
 			console.log('TileColMin: ' + tileColMin);
 			console.log('TileRowMin: ' + tileRowMin);
 			console.log('TileColMax: ' + tileColMax);
 			console.log('TileRowMax: ' + tileRowMax);
+			*/
 			var tileCols=tileColMax-tileColMin+1;
 			var tileRows=tileRowMax-tileRowMin+1;
 			console.log('TileCols: ' + tileCols);
 			console.log('TileRows: ' + tileRows);
 			var totalCalls=tileCols*tileRows;
 			console.log('TotalCalls: ' + totalCalls);
+			var wmtsCalls=[];
+			// Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
 			for (var tc=tileColMin;tc<=tileColMax;tc++){
 				for (var tr=tileRowMin;tr<=tileRowMax;tr++){
-					var prototype='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:32633&TileMatrix='+activeMatrix+'&TileRow='+tr+'&TileCol='+tc;
-					console.log(prototype);
+					wmtsCalls.push({
+						tileRow: tr,
+						tileCol: tc,
+						url: {
+							wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
+							wms: '' 
+						},
+						bounds: {
+							minx: parseFloat(activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX)),
+							miny: activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY),
+							maxx: activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX),
+							maxy: activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY)
+						}
+					});
 				}
 			}
+			console.log(wmtsCalls);
             }
 	}
 	client.send();
@@ -386,7 +433,7 @@ var wxs3 = wxs3 || {};
     var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
     function parseCapabilities(capabilitiesXml) {
-	var tileMatrixSetDict={};
+	var tileMatrixSetDict=[];
 	var pixelsize=0.00028;
 	var layers=capabilitiesXml.getElementsByTagName("Layer");
 	//TODO: This fetches tileMatrixes we don't need: 
@@ -418,7 +465,8 @@ var wxs3 = wxs3 || {};
 								var tileMatrixCount=tileMatrix.length;
 								// Iterate through all matrixes for crs
 								for (var tileMatrixIndex=0;tileMatrixIndex<tileMatrixCount; tileMatrixIndex++){
-									tileMatrixSetDict[tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML]= {
+									tileMatrixSetDict.push({
+										Identifier: tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML,
 										ScaleDenominator: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML),
 										TopLeftCorner: { 
 											minx: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[0]) ,
@@ -430,7 +478,7 @@ var wxs3 = wxs3 || {};
 										MatrixHeight: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML),
 										TileSpanX: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
 										TileSpanY: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML
-									};
+									});
 								}
 								console.timeEnd('capabilities parsing');
 							}
