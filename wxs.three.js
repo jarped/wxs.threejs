@@ -239,16 +239,17 @@ var wxs3 = wxs3 || {};
 			var capabilitiesText=client.responseText;
 			var capabilitiesXml=txt2xml(capabilitiesText);
 			tileMatrixSet=parseCapabilities(capabilitiesXml);
-			console.log(tileMatrixSet['EPSG:32633:11']);
+			// TODO: figure out which queryspan is the smallest. Derrive tilematrix (zoom) by finding the first with smaller tilespan in that dimension.
+			var activeMatrix='EPSG:32633:11';
+			console.log(tileMatrixSet[activeMatrix]);
 			//console.log(tileMatrixSet);
 			console.log(bounds);
-			// TODO: figure out which queryspan is the smallest. Derrive tilematrix (zoom) by finding the first with smaller tilespan in that dimension.
 			console.log('QuerySpanX: ' + String((bounds.maxx-bounds.minx)));
 			console.log('QuerySpanY: ' + String((bounds.maxy-bounds.miny)));
-                        var tileColMin=Math.floor((bounds.minx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX);
-                        var tileRowMin=Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet['EPSG:32633:11'].TileSpanY);
-                        var tileColMax=Math.floor((bounds.maxx-tileMatrixSet['EPSG:32633:11'].TopLeftCorner.minx)/tileMatrixSet['EPSG:32633:11'].TileSpanX);
-                        var tileRowMax=Math.floor((tileMatrixSet['EPSG:32633:11'].TopLeftCorner.maxy-bounds.miny)/tileMatrixSet['EPSG:32633:11'].TileSpanY);
+                        var tileColMin=Math.floor((bounds.minx-tileMatrixSet[activeMatrix].TopLeftCorner.minx)/tileMatrixSet[activeMatrix].TileSpanX);
+                        var tileRowMin=Math.floor((tileMatrixSet[activeMatrix].TopLeftCorner.maxy-bounds.maxy)/tileMatrixSet[activeMatrix].TileSpanY);
+                        var tileColMax=Math.floor((bounds.maxx-tileMatrixSet[activeMatrix].TopLeftCorner.minx)/tileMatrixSet[activeMatrix].TileSpanX);
+                        var tileRowMax=Math.floor((tileMatrixSet[activeMatrix].TopLeftCorner.maxy-bounds.miny)/tileMatrixSet[activeMatrix].TileSpanY);
 			console.log('TileColMin: ' + tileColMin);
 			console.log('TileRowMin: ' + tileRowMin);
 			console.log('TileColMax: ' + tileColMax);
@@ -259,8 +260,12 @@ var wxs3 = wxs3 || {};
 			console.log('TileRows: ' + tileRows);
 			var totalCalls=tileCols*tileRows;
 			console.log('TotalCalls: ' + totalCalls);
-
-		
+			for (var tc=tileColMin;tc<=tileColMax;tc++){
+				for (var tr=tileRowMin;tr<=tileRowMax;tr++){
+					var prototype='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:32633&TileMatrix='+activeMatrix+'&TileRow='+tr+'&TileCol='+tc;
+					console.log(prototype);
+				}
+			}
             }
 	}
 	client.send();
