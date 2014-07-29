@@ -279,18 +279,22 @@ var wxs3 = wxs3 || {};
 				// Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
 				for (var tc=tileColMin;tc<=tileColMax;tc++){
 					for (var tr=tileRowMin;tr<=tileRowMax;tr++){
+						var minx=activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX);
+						var miny=activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY);
+						var maxx=activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX);
+						var maxy=activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY);
 						wmtsCalls.push({
 							tileRow: tr,
 							tileCol: tc,
 							url: {
-								wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=norges_grunnkart&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
-								wms: '' 
+								wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
+								wms: 'http://wms.geonorge.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
 							},
 							bounds: {
-								minx: activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX),
-								miny: activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY),
-								maxx: activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX),
-								maxy: activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY)
+								minx: minx,
+								miny: miny,
+								maxx: minx,
+								maxy: maxy 
 							}
 						});
 					}
@@ -301,7 +305,6 @@ var wxs3 = wxs3 || {};
 			
 		}
 		client.send();
-
         // Proof of concept with 2 subdivision in each dimension:
 
 
@@ -349,6 +352,7 @@ var wxs3 = wxs3 || {};
 
     };
 
+	// How might we use this me wonders
     ns.ThreeDMap.prototype.tileLoader = function (wmtsCalls) {
         this.tiles = [];
 		for (var i = 0; i<wmtsCalls.length;i++){	
