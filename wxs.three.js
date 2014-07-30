@@ -24,7 +24,7 @@ var wxs3 = wxs3 || {};
     var WCSTile = function (dim, tileNr, bounds) {
         this.dim = dim;
         this.tileNr = tileNr;
-        this.bounds = bounds;;
+        this.bounds = bounds;
         this.loaded = false;
     };
 
@@ -153,9 +153,9 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
-        // Setting demWidth and demHeight to 1/8th or so of 256
-        dim.demWidth=32;
-        dim.demHeight=32;
+        // Setting demWidth and demHeight to something that multiplies into 256
+        dim.demWidth=64;
+        dim.demHeight=64;
 
         // mapunits between vertexes in x-dimension
         dim.proportionWidth = dim.metersWidth / dim.demWidth;
