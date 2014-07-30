@@ -24,23 +24,25 @@ var wxs3 = wxs3 || {};
     var WCSTile = function (dim, tileNr, bounds) {
         this.dim = dim;
         this.tileNr = tileNr;
-        this.bounds = bounds;
+        this.bounds = bounds;;
         this.loaded = false;
     };
 
     WCSTile.prototype.getWcsBbox = function () {
         return [
-            parseInt(this.bounds.minx, 10),
-            parseInt(this.bounds.miny - this.dim.proportionHeight, 10),
-            parseInt(this.bounds.maxx + this.dim.proportionWidth, 10),
-            parseInt(this.bounds.maxy, 10)
-        ].join(',');
+                //Arbitrary value added and subtracted to include heights along border. 
+                //TODO: Needs a precise fix
+                this.wmtsCall.bounds.minx,
+                this.wmtsCall.bounds.miny - (this.wmtsCall.tileSpanY/this.dim.demWidth),
+                this.wmtsCall.bounds.maxx + (this.wmtsCall.tileSpanX/this.dim.demHeight),
+                this.wmtsCall.bounds.maxy
+        ].join(',')
     };
 
-    WCSTile.prototype.load = function (callback) {
+    WCSTile.prototype.load = function (callback, wmtsCall) {
 
         this.callback = callback;
-
+        this.wmtsCall=wmtsCall;
         var params = {
             SERVICE: 'WCS',
             VERSION: '1.0.0',
@@ -74,8 +76,8 @@ var wxs3 = wxs3 || {};
     WCSTile.prototype.createGeometry = function (xyzlines) {
 
         var geometry = new THREE.PlaneGeometry(
-            this.bounds.maxx - this.bounds.minx,
-            this.bounds.maxy - this.bounds.miny,
+            this.wmtsCall.bounds.maxx - this.wmtsCall.bounds.minx,
+            this.wmtsCall.bounds.maxy - this.wmtsCall.bounds.miny,
             (this.dim.demWidth - 1),
             (this.dim.demHeight - 1)
         );
@@ -91,9 +93,7 @@ var wxs3 = wxs3 || {};
     };
 
     WCSTile.prototype.getWmsBbox = function () {
-
         var lastIndex = this.geometry.vertices.length - 1;
-
         var firstVertex = this.geometry.vertices[0];
         var lastVertex = this.geometry.vertices[lastIndex];
         return [
@@ -118,14 +118,16 @@ var wxs3 = wxs3 || {};
     };
 
     WCSTile.prototype.createMaterial = function () {
+        //TODO: change this to WMTS. For now we can use wms-calls to a cache
         var params = {
             service: 'wms',
             version: '1.3.0',
             request: 'getmap',
             crs: this.dim.crs,
             srs: this.dim.crs,
-            WIDTH: this.dim.demWidth * this.dim.wmsMult,
-            HEIGHT: this.dim.demHeight * this.dim.wmsMult,
+            // Set these to 256, but should be variables as this only works when using cache. We should also allow wms.
+            WIDTH: 256,
+            HEIGHT: 256,
             bbox: this.getWmsBbox(),
             layers: this.dim.wmsLayers,
             format: this.dim.wmsFormat + this.dim.wmsFormatMode
@@ -151,16 +153,9 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
-
-        //TODO: these shpuld be moved to separate functions to improve
-        //readability. I'm not quite certain how to name these functions
-        if (dim.metersWidth > dim.metersHeight) {
-            var widthHeightRatio = dim.metersWidth / dim.metersHeight;
-            dim.demWidth = parseInt(widthHeightRatio * dim.demWidth, 10);
-        } else if (dim.metersWidth < dim.metersHeight) {
-            var heightWidthRatio = dim.metersHeight / dim.metersWidth;
-            dim.demHeight = parseInt(heightWidthRatio * dim.demHeight, 10);
-        }
+        // Setting demWidth and demHeight to 1/8th or so of 256
+        dim.demWidth=32;
+        dim.demHeight=32;
 
         // mapunits between vertexes in x-dimension
         dim.proportionWidth = dim.metersWidth / dim.demWidth;
@@ -177,8 +172,6 @@ var wxs3 = wxs3 || {};
 
         // Generate tiles and boundingboxes
         this.bbox2tiles(this.dim.getBounds());
-        //var wmtsCalls=this.bbox2tiles(this.dim.getBounds());
-		//this.tileLoader(wmtsCalls);
         document.getElementById('webgl').appendChild(this.renderer.domElement);
     };
 
@@ -232,6 +225,7 @@ var wxs3 = wxs3 || {};
 		var client = new XMLHttpRequest();
 		var tileMatrixSet={};
 		var wmtsCalls=[];
+        var that = this;
 		client.open('GET', capabilitiesURL);
 		client.onreadystatechange = function() {
 			if (this.readyState === 4) {
@@ -284,72 +278,29 @@ var wxs3 = wxs3 || {};
 						var maxx=activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX);
 						var maxy=activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY);
 						wmtsCalls.push({
+                            tileSpanX: activeMatrix.TileSpanX,
+                            tileSpanY: activeMatrix.TileSpanY,
 							tileRow: tr,
 							tileCol: tc,
+                            // Setting these for easy debugging
 							url: {
 								wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
-								wms: 'http://wms.geonorge.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
+								wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
 							},
 							bounds: {
 								minx: minx,
 								miny: miny,
-								maxx: minx,
+								maxx: maxx,
 								maxy: maxy 
 							}
 						});
 					}
 				}
-			console.log(wmtsCalls);
-			return wmtsCalls;
+            that.tileLoader(wmtsCalls);
     		}
 			
 		}
 		client.send();
-        // Proof of concept with 2 subdivision in each dimension:
-
-
-	    this.tiles = [];
-
-        //0,0
-        this.tiles.push(
-            new WCSTile(this.dim, 'x0_y0', {
-                minx: bounds.minx,
-                miny: bounds.miny,
-                maxx: (bounds.minx + bounds.maxx) / 2,
-                maxy: (bounds.miny + bounds.maxy) / 2
-            }).load(this.tileLoaded.bind(this))
-        );
-
-        //1,0
-        this.tiles.push(
-            new WCSTile(this.dim, 'x1_y0', {
-                minx: (bounds.minx + bounds.maxx) / 2,
-                miny: bounds.miny,
-                maxx: bounds.maxx,
-                maxy: (bounds.miny + bounds.maxy) / 2
-            }).load(this.tileLoaded.bind(this))
-        );
-
-        //0,1
-        this.tiles.push(
-            new WCSTile(this.dim, 'x0_y1', {
-                minx: bounds.minx,
-                miny: (bounds.miny + bounds.maxy) / 2,
-                maxx: (bounds.minx + bounds.maxx) / 2,
-                maxy: bounds.maxy
-            }).load(this.tileLoaded.bind(this))
-        );
-
-        //1,1
-        this.tiles.push(
-            new WCSTile(this.dim, 'x1_y1', {
-                minx: (bounds.minx + bounds.maxx) / 2,
-                miny: (bounds.miny + bounds.maxy) / 2,
-                maxx: bounds.maxx,
-                maxy: bounds.maxy
-            }).load(this.tileLoaded.bind(this))
-        );
-
     };
 
 	// How might we use this me wonders
@@ -362,7 +313,7 @@ var wxs3 = wxs3 || {};
                 	miny: wmtsCalls[i].bounds.miny,
 	                maxx: wmtsCalls[i].bounds.maxx,
         	        maxy: wmtsCalls[i].bounds.maxy
-	            }).load(this.tileLoaded.bind(this))
+	            }).load(this.tileLoaded.bind(this), wmtsCalls[i])
 			)
 		};
     };
@@ -456,7 +407,6 @@ var wxs3 = wxs3 || {};
 				//Check for specified crs
 				//TODO: should be evaluated against wxs url-parameters
 				if (layerTileMatrixSets[layerTileMatrix].getElementsByTagName('TileMatrixSet')[0].innerHTML=='EPSG:32633'){
-					//console.log(layerTileMatrixSets[layerTileMatrix].getElementsByTagName('TileMatrixSet')[0].innerHTML);
 					var tileMatrixSetsCount=tileMatrixSets.length;
 					// We've now verified that the specified layer supports the specified crs. Time to fetch the actual tilematrixset
 					for (var tileMatrixSet=0; tileMatrixSet<tileMatrixSetsCount; tileMatrixSet++)
