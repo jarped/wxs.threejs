@@ -40,7 +40,6 @@ var wxs3 = wxs3 || {};
     };
 
     WCSTile.prototype.load = function (callback, wmtsCall) {
-
         this.callback = callback;
         this.wmtsCall=wmtsCall;
         var params = {
@@ -176,7 +175,10 @@ var wxs3 = wxs3 || {};
     };
 
     ns.ThreeDMap.prototype.createRenderer = function () {
+        // Canvasrenderer + material.overdra1=1.0 will fix gaps. Unfortunately waaaay too slow for pur use.
+        //this.renderer = new THREE.CanvasRenderer();
         this.renderer = new THREE.WebGLRenderer();
+        
         this.renderer.setSize(this.dim.width, this.dim.height);
     };
 
@@ -284,8 +286,9 @@ var wxs3 = wxs3 || {};
 							tileCol: tc,
                             // Setting these for easy debugging
 							url: {
-								wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
-								wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
+								cache_wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
+                                cache_wms: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wms?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy ,
+								wms: 'http://wms.geonorge.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
 							},
 							bounds: {
 								minx: minx,
@@ -303,7 +306,6 @@ var wxs3 = wxs3 || {};
 		client.send();
     };
 
-	// How might we use this me wonders
     ns.ThreeDMap.prototype.tileLoader = function (wmtsCalls) {
         this.tiles = [];
 		for (var i = 0; i<wmtsCalls.length;i++){	
@@ -318,6 +320,8 @@ var wxs3 = wxs3 || {};
 		};
     };
     ns.ThreeDMap.prototype.tileLoaded = function (tile) {
+        //This can be used with CanvasRenderer to fix gaps.
+        //tile.plane.material.overdraw=0.5;
         this.scene.add(tile.plane);
         this.render();
     };
@@ -372,8 +376,8 @@ var wxs3 = wxs3 || {};
         },
         crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
         coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
-        wmsUrl: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
-        wcsUrl: 'http://openwms.statkart.no/skwms1/wcs.dtm',
+        wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
+        wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
         wmsMult: getQueryVariable("WMSMULT") || 5,
         wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
         wmsFormatMode: "",
@@ -388,61 +392,51 @@ var wxs3 = wxs3 || {};
     var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
     function parseCapabilities(capabilitiesXml) {
-	var tileMatrixSetDict=[];
-	var pixelsize=0.00028;
-	var layers=capabilitiesXml.getElementsByTagName("Layer");
-	//TODO: This fetches tileMatrixes we don't need: 
-	var tileMatrixSets=capabilitiesXml.getElementsByTagName("TileMatrixSet");
-	var layersCount=layers.length;
-	// Iterate through all layers
-	for (var layer=0; layer<layersCount; layer++) {
-		//Check for layer specified
-		//TODO: should be evaluated against wxs url-parameters
-		if (layers[layer].getElementsByTagName('Identifier')[0].innerHTML=='topo2'){
-			var activeLayer=layers[layer];
-			var layerTileMatrixSets=activeLayer.getElementsByTagName('TileMatrixSetLink');
-			var layerTileMatrixCount=layerTileMatrixSets.length;
-			// Iterate through all tilematrixsets allowed for layer
-			for (var layerTileMatrix=0; layerTileMatrix<layerTileMatrixCount; layerTileMatrix++){
-				//Check for specified crs
-				//TODO: should be evaluated against wxs url-parameters
-				if (layerTileMatrixSets[layerTileMatrix].getElementsByTagName('TileMatrixSet')[0].innerHTML=='EPSG:32633'){
-					var tileMatrixSetsCount=tileMatrixSets.length;
-					// We've now verified that the specified layer supports the specified crs. Time to fetch the actual tilematrixset
-					for (var tileMatrixSet=0; tileMatrixSet<tileMatrixSetsCount; tileMatrixSet++)
-					{
-						// Neccessary hack since we fetch too many tilematrixes
-						if(tileMatrixSets[tileMatrixSet].getElementsByTagName('Identifier').length >0){
-							//Check for specified crs
-							if (tileMatrixSets[tileMatrixSet].getElementsByTagName('Identifier')[0].innerHTML=='EPSG:32633'){
-								var tileMatrix=tileMatrixSets[tileMatrixSet].getElementsByTagName('TileMatrix');
-								var tileMatrixCount=tileMatrix.length;
-								// Iterate through all matrixes for crs
-								for (var tileMatrixIndex=0;tileMatrixIndex<tileMatrixCount; tileMatrixIndex++){
-									tileMatrixSetDict.push({
-										Identifier: tileMatrix[tileMatrixIndex].getElementsByTagName('Identifier')[0].innerHTML,
-										ScaleDenominator: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML),
-										TopLeftCorner: { 
-											minx: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[0]) ,
-											maxy: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('TopLeftCorner')[0].innerHTML.split(' ')[1]) ,
-										},
-										TileWidth: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML),
-										TileHeight: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML),
-										MatrixWidth: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixWidth')[0].innerHTML),
-										MatrixHeight: parseInt(tileMatrix[tileMatrixIndex].getElementsByTagName('MatrixHeight')[0].innerHTML),
-										TileSpanX: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileWidth')[0].innerHTML,
-										TileSpanY: parseFloat(tileMatrix[tileMatrixIndex].getElementsByTagName('ScaleDenominator')[0].innerHTML*pixelsize)*tileMatrix[tileMatrixIndex].getElementsByTagName('TileHeight')[0].innerHTML
-									});
-								}
-								console.timeEnd('capabilities parsing');
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return tileMatrixSetDict;
+    	var tileMatrixSetDict=[];
+    	var pixelsize=0.00028;
+        // Hacky namespace-resolver to read default namespace. suggestions welcome
+        var resolver = {
+                        lookupNamespaceURI: function lookup(aPrefix) {
+                            if (aPrefix == "default") {
+                                return capabilitiesXml.documentElement.namespaceURI;
+                            }
+                            else if(aPrefix == 'ows') {
+                                return 'http://www.opengis.net/ows/1.1';
+                            }
+                        }
+                    }
+
+        //TODO: Find layers from capabilities and check if crs is supported by layer. Example xpath:
+        //var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='topo2']]",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
+
+        // Find tilematrixset:
+        var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:TileMatrixSet[child::ows:Identifier[text()='EPSG:32633']]/default:TileMatrix",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
+        try {
+          var thisNode = iterator.iterateNext();
+          
+          while (thisNode) {
+            tileMatrixSetDict.push({
+                Identifier: thisNode.childNodes[3].textContent,
+                ScaleDenominator: parseFloat(thisNode.childNodes[5].textContent),
+                TopLeftCorner: { 
+                    minx: parseFloat(thisNode.childNodes[7].textContent.split(' ')[0]) ,
+                    maxy: parseFloat(thisNode.childNodes[7].textContent.split(' ')[1]) ,
+                },
+                TileWidth: parseInt(thisNode.childNodes[9].textContent),
+                TileHeight: parseInt(thisNode.childNodes[11].textContent),
+                MatrixWidth: parseInt(thisNode.childNodes[13].textContent),
+                MatrixHeight: parseInt(thisNode.childNodes[15].textContent),
+                TileSpanX: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[9].textContent),
+                TileSpanY: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[11].textContent)
+            });
+            thisNode = iterator.iterateNext();
+          } 
+        }
+        catch (e) {
+          console.log( 'Error: An error occured during iteration ' + e );
+        }
+
+    	return tileMatrixSetDict;
     }
     function txt2xml(xmltxt) {
 	if(window.DOMParser){
