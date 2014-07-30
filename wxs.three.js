@@ -288,7 +288,7 @@ var wxs3 = wxs3 || {};
 							url: {
 								cache_wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
                                 cache_wms: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wms?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy ,
-								wms: 'http://wms.geonorge.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
+								wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
 							},
 							bounds: {
 								minx: minx,
@@ -376,8 +376,8 @@ var wxs3 = wxs3 || {};
         },
         crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
         coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
-        wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
-        wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
+        wmsUrl: getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
+        wcsUrl: 'http://openwms.statkart.no/skwms1/wcs.dtm',
         wmsMult: getQueryVariable("WMSMULT") || 5,
         wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
         wmsFormatMode: "",
