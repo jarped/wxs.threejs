@@ -3,13 +3,13 @@ var wxs3 = wxs3 || {};
 (function (ns) {
     'use strict';
 
-    //check WebGL
+    // check WebGL
     if (!window.WebGLRenderingContext) {
         // the browser doesn't even know what WebGL is
         window.location = "http://get.webgl.org";
     }
 
-    //utility func to convert dict of {key: "val", key2: "val2"} to key=val&key2=val2
+    // utility func to convert dict of {key: "val", key2: "val2"} to key=val&key2=val2
     function urlformat(values) {
         var res = [], key;
         for (key in values) {
@@ -30,8 +30,8 @@ var wxs3 = wxs3 || {};
 
     WCSTile.prototype.getWcsBbox = function () {
         return [
-                //Arbitrary value added and subtracted to include heights along border. 
-                //TODO: Needs a precise fix
+                // Arbitrary value added and subtracted to include heights along border. 
+                // TODO: Needs a precise fix
                 this.wmtsCall.bounds.minx,
                 this.wmtsCall.bounds.miny - (this.wmtsCall.tileSpanY/this.dim.demWidth),
                 this.wmtsCall.bounds.maxx + (this.wmtsCall.tileSpanX/this.dim.demHeight),
@@ -68,7 +68,7 @@ var wxs3 = wxs3 || {};
         };
         demTileRequest.send();
 
-        //allows chaining
+        // allows chaining
         return this;
     };
 
@@ -117,7 +117,7 @@ var wxs3 = wxs3 || {};
     };
 
     WCSTile.prototype.createMaterial = function () {
-        //TODO: change this to WMTS. For now we can use wms-calls to a cache
+        // TODO: change this to WMTS. For now we can use wms-calls to a cache
         var params = {
             service: 'wms',
             version: '1.3.0',
@@ -152,10 +152,11 @@ var wxs3 = wxs3 || {};
         this.renderer = null;
         this.controls = null;
 
-        // Setting demWidth and demHeight to something that multiplies into 256
+        // Setting demWidth and demHeight to some fraction of 256
         dim.demWidth=64;
         dim.demHeight=64;
 
+        // Don't think we actually use these anymore, but keep them around for now.
         // mapunits between vertexes in x-dimension
         dim.proportionWidth = dim.metersWidth / dim.demWidth;
 
@@ -223,104 +224,105 @@ var wxs3 = wxs3 || {};
     };
 
     ns.ThreeDMap.prototype.bbox2tiles = function (bounds) {
-		var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
-		var client = new XMLHttpRequest();
-		var tileMatrixSet={};
-		var wmtsCalls=[];
+        var capabilitiesURL='http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?Version=1.0.0&service=wmts&request=getcapabilities';
+        var client = new XMLHttpRequest();
+        var tileMatrixSet={};
+        var wmtsCalls=[];
         var that = this;
-		client.open('GET', capabilitiesURL);
-		client.onreadystatechange = function() {
-			if (this.readyState === 4) {
-				// Start timing
-				console.time('capabilities parsing');
-				var capabilitiesText=client.responseText;
-				var capabilitiesXml=txt2xml(capabilitiesText);
-				tileMatrixSet=parseCapabilities(capabilitiesXml);
+        client.open('GET', capabilitiesURL);
+        client.onreadystatechange = function() {
+            if (this.readyState === 4) {
+                // Start timing
+                console.time('capabilities parsing');
+                var capabilitiesText=client.responseText;
+                var capabilitiesXml=txt2xml(capabilitiesText);
+                tileMatrixSet=parseCapabilities(capabilitiesXml);
 
-				var querySpanX=bounds.maxx-bounds.minx;
-				var querySpanY=bounds.maxy-bounds.miny;
-				var querySpanMin;
-				var querySpanMinDim;
-			
-				if (querySpanX>querySpanY){
-					querySpanMin=querySpanY;
-					querySpanMinDim='y';
-				}
-				else{
-					querySpanMin=querySpanX;
-					querySpanMinDim='x';
-				}
-				var tileMatrixCount=tileMatrixSet.length;
-				var activeMatrix;
-				// Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
-				// We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-				for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
-					if(querySpanMinDim='x')
-						if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
-							activeMatrix=tileMatrixSet[tileMatrix];
-							break;
-						}
-					else
-						if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
-							activeMatrix=tileMatrixSet[tileMatrix];
-							break;
-						}
-				}
+                var querySpanX=bounds.maxx-bounds.minx;
+                var querySpanY=bounds.maxy-bounds.miny;
+                var querySpanMin;
+                var querySpanMinDim;
+            
+                if (querySpanX>querySpanY){
+                    querySpanMin=querySpanY;
+                    querySpanMinDim='y';
+                }
+                else{
+                    querySpanMin=querySpanX;
+                    querySpanMinDim='x';
+                }
+                var tileMatrixCount=tileMatrixSet.length;
+                var activeMatrix;
+                // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
+                // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
+                for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
+                    if(querySpanMinDim='x')
+                        if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+                            activeMatrix=tileMatrixSet[tileMatrix];
+                            break;
+                        }
+                    else
+                        if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin){
+                            activeMatrix=tileMatrixSet[tileMatrix];
+                            break;
+                        }
+                }
 
-	            var tileColMin=Math.floor((bounds.minx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
-    	        var tileRowMin=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.maxy)/activeMatrix.TileSpanY);
-        	    var tileColMax=Math.floor((bounds.maxx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
-            	var tileRowMax=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.miny)/activeMatrix.TileSpanY);
+                var tileColMin=Math.floor((bounds.minx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+                var tileRowMin=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.maxy)/activeMatrix.TileSpanY);
+                var tileColMax=Math.floor((bounds.maxx-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
+                var tileRowMax=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.miny)/activeMatrix.TileSpanY);
 
-				// Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
-				for (var tc=tileColMin;tc<=tileColMax;tc++){
-					for (var tr=tileRowMin;tr<=tileRowMax;tr++){
-						var minx=activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX);
-						var miny=activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY);
-						var maxx=activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX);
-						var maxy=activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY);
-						wmtsCalls.push({
+                // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
+                for (var tc=tileColMin;tc<=tileColMax;tc++){
+                    for (var tr=tileRowMin;tr<=tileRowMax;tr++){
+                        var minx=activeMatrix.TopLeftCorner.minx+(tc*activeMatrix.TileSpanX);
+                        var miny=activeMatrix.TopLeftCorner.maxy-((tr+1)*activeMatrix.TileSpanY);
+                        var maxx=activeMatrix.TopLeftCorner.minx+((tc+1)*activeMatrix.TileSpanX);
+                        var maxy=activeMatrix.TopLeftCorner.maxy-((tr)*activeMatrix.TileSpanY);
+                        wmtsCalls.push({
                             tileSpanX: activeMatrix.TileSpanX,
                             tileSpanY: activeMatrix.TileSpanY,
-							tileRow: tr,
-							tileCol: tc,
+                            tileRow: tr,
+                            tileCol: tc,
                             // Setting these for easy debugging
-							url: {
-								cache_wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
+                            // TODO: define parameters here for reuse later on
+                            url: {
+                                cache_wmts: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tr+'&TileCol='+tc,
                                 cache_wms: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wms?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy ,
-								wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
-							},
-							bounds: {
-								minx: minx,
-								miny: miny,
-								maxx: maxx,
-								maxy: maxy 
-							}
-						});
-					}
-				}
+                                wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ minx + ',' + miny + ',' + maxx + ',' + maxy 
+                            },
+                            bounds: {
+                                minx: minx,
+                                miny: miny,
+                                maxx: maxx,
+                                maxy: maxy 
+                            }
+                        });
+                    }
+                }
             that.tileLoader(wmtsCalls);
-    		}
-			
-		}
-		client.send();
+            }
+            
+        }
+        client.send();
     };
 
     ns.ThreeDMap.prototype.tileLoader = function (wmtsCalls) {
         this.tiles = [];
-		for (var i = 0; i<wmtsCalls.length;i++){	
-			this.tiles.push(
-	            new WCSTile(this.dim, wmtsCalls[i].tileCol+'_'+wmtsCalls[i].tileRow, {
-        	        minx: wmtsCalls[i].bounds.minx,
-                	miny: wmtsCalls[i].bounds.miny,
-	                maxx: wmtsCalls[i].bounds.maxx,
-        	        maxy: wmtsCalls[i].bounds.maxy
-	            }).load(this.tileLoaded.bind(this), wmtsCalls[i])
-			)
-		};
+        for (var i = 0; i<wmtsCalls.length;i++){    
+            this.tiles.push(
+                new WCSTile(this.dim, wmtsCalls[i].tileCol+'_'+wmtsCalls[i].tileRow, {
+                    minx: wmtsCalls[i].bounds.minx,
+                    miny: wmtsCalls[i].bounds.miny,
+                    maxx: wmtsCalls[i].bounds.maxx,
+                    maxy: wmtsCalls[i].bounds.maxy
+                }).load(this.tileLoaded.bind(this), wmtsCalls[i])
+            )
+        };
     };
     ns.ThreeDMap.prototype.tileLoaded = function (tile) {
-        //This can be used with CanvasRenderer to fix gaps.
+        // This can be used with CanvasRenderer to fix gaps.
         //tile.plane.material.overdraw=0.5;
         this.scene.add(tile.plane);
         this.render();
@@ -392,21 +394,23 @@ var wxs3 = wxs3 || {};
     var threeDMap = new ns.ThreeDMap(wmsLayers, dim);
 
     function parseCapabilities(capabilitiesXml) {
-    	var tileMatrixSetDict=[];
-    	var pixelsize=0.00028;
+        var tileMatrixSet=[];
+        // *magic* number for meters-based projections.
+        // TODO: Figure out correct number for geographic projections
+        var pixelsize=0.00028;
         // Hacky namespace-resolver to read default namespace. suggestions welcome
         var resolver = {
-                        lookupNamespaceURI: function lookup(aPrefix) {
-                            if (aPrefix == "default") {
-                                return capabilitiesXml.documentElement.namespaceURI;
-                            }
-                            else if(aPrefix == 'ows') {
-                                return 'http://www.opengis.net/ows/1.1';
-                            }
-                        }
-                    }
+            lookupNamespaceURI: function lookup(aPrefix) {
+                if (aPrefix == "default") {
+                    return capabilitiesXml.documentElement.namespaceURI;
+                }
+                else if(aPrefix == 'ows') {
+                    return 'http://www.opengis.net/ows/1.1';
+                }
+            }
+        }
 
-        //TODO: Find layers from capabilities and check if crs is supported by layer. Example xpath:
+        // TODO: Find layers from capabilities and check if crs is supported by layer. Example xpath:
         //var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='topo2']]",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
 
         // Find tilematrixset:
@@ -415,18 +419,22 @@ var wxs3 = wxs3 || {};
           var thisNode = iterator.iterateNext();
           
           while (thisNode) {
-            tileMatrixSetDict.push({
+            // Populate tileMatrixSet
+            tileMatrixSet.push({
                 Identifier: thisNode.childNodes[3].textContent,
                 ScaleDenominator: parseFloat(thisNode.childNodes[5].textContent),
                 TopLeftCorner: { 
-                    minx: parseFloat(thisNode.childNodes[7].textContent.split(' ')[0]) ,
-                    maxy: parseFloat(thisNode.childNodes[7].textContent.split(' ')[1]) ,
+                    minx: parseFloat(thisNode.childNodes[7].textContent.split(' ')[0]),
+                    maxy: parseFloat(thisNode.childNodes[7].textContent.split(' ')[1]),
                 },
                 TileWidth: parseInt(thisNode.childNodes[9].textContent),
                 TileHeight: parseInt(thisNode.childNodes[11].textContent),
                 MatrixWidth: parseInt(thisNode.childNodes[13].textContent),
                 MatrixHeight: parseInt(thisNode.childNodes[15].textContent),
+                // These are the two central numbers we need to calculate:
+                // scaledenominator*pixelsize*tilewidth
                 TileSpanX: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[9].textContent),
+                // scaledenominator*pixelsize*tileheight
                 TileSpanY: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[11].textContent)
             });
             thisNode = iterator.iterateNext();
@@ -436,18 +444,18 @@ var wxs3 = wxs3 || {};
           console.log( 'Error: An error occured during iteration ' + e );
         }
 
-    	return tileMatrixSetDict;
+        return tileMatrixSet;
     }
     function txt2xml(xmltxt) {
-	if(window.DOMParser){
-	    // non i.e. browser
-	    var xmlparser = new DOMParser();
-	    var xmlDoc = xmlparser.parseFromString(xmltxt, "text/xml");
-	}else{
-	    // i.e. browser 
-	    var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-	    xmlDoc.async = false;
-	    xmlDoc.loadXML(xmltxt);
+    if(window.DOMParser){
+        // non i.e. browser
+        var xmlparser = new DOMParser();
+        var xmlDoc = xmlparser.parseFromString(xmltxt, "text/xml");
+    }else{
+        // i.e. browser 
+        var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+        xmlDoc.async = false;
+        xmlDoc.loadXML(xmltxt);
 }
 return xmlDoc;
 };
