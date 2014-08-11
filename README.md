@@ -1,6 +1,10 @@
 wxs.threejs
 ===========
 
+*** WARNING ***
+Major reworking of structure. 
+Some old functionality is temporarily gone.
+
 Realtime consumption of wxs-services
 
 Additional information:
