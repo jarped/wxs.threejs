@@ -14,7 +14,6 @@ var wxs3 = wxs3 || {};
         this.backgroundTiles=[];
         this.foregroundTiles=[];
         this.foregroundTilesIndex=[];
-        this.
 
         // Setting demWidth and demHeight to some fraction of 256
         dim.demWidth=32;
@@ -325,6 +324,13 @@ var wxs3 = wxs3 || {};
                 var WCSTile =new ns.WCS( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY,dim.demWidth-1, dim.demHeight-1);
                 WCSTile.wcsFetcher( WMTSCalls[i]);
                 var geometry=WCSTile.geometry;
+                        geometry.processed={
+                            left: false,
+                            right: false,
+                            top: false,
+                            bottom: false,
+                            all: false
+                        }
                 var material= new THREE.MeshBasicMaterial(
                     {
                         map: THREE.ImageUtils.loadTexture(

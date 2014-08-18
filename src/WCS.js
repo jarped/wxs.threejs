@@ -35,13 +35,6 @@ var wxs3 = wxs3 || {};
         }
         // Mark geometry for update on next render.
         geometry.loaded=true;
-        geometry.processed={
-            left: false,
-            right: false,
-            top: false,
-            bottom: false,
-            all: false
-        }
         geometry.verticesNeedUpdate=true;
         // Don't know if this helps, better to err on safe side.
         this.WCS=null;
