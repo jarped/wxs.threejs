@@ -175,6 +175,7 @@ var wxs3 = wxs3 || {};
     
     ns.ThreeDMap.prototype.centralTileFetcher = function (bounds, activeMatrix){
         var WMTSCalls=[];
+        var name=null;
         var tileCol=Math.floor((bounds.x-activeMatrix.TopLeftCorner.minx)/activeMatrix.TileSpanX);
         var tileRow=Math.floor((activeMatrix.TopLeftCorner.maxy-bounds.y)/activeMatrix.TileSpanY);
         var tileColMin=tileCol-1;
@@ -183,8 +184,13 @@ var wxs3 = wxs3 || {};
         var tileRowMax=tileRow+1;
         // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
         for (var tc=tileColMin;tc<=tileColMax;tc++)
-            for (var tr=tileRowMin;tr<=tileRowMax;tr++)
-                WMTSCalls.push(this.singleTileFetcher(tc, tr,activeMatrix));
+            for (var tr=tileRowMin;tr<=tileRowMax;tr++){
+                name=activeMatrix.Zoom+'_'+tr+'_'+tc;
+                if (this.backgroundTiles.indexOf(name) == -1) {
+                    this.backgroundTiles.push(name);
+                    WMTSCalls.push(this.singleTileFetcher(tc, tr,activeMatrix));
+                }
+            }
         return WMTSCalls;
     }
     
@@ -242,12 +248,14 @@ var wxs3 = wxs3 || {};
         this.intersects = this.raycaster.intersectObjects(this.backgroundGroup.children);        
         if (this.intersects.length > 0) {
             name=this.intersects[0].object.tileName;
+            var neighbourCalls=this.tileNeighbours(name);
+
             this.intersects[0].object.processed=true;
             this.backgroundGroup.remove(this.intersects[0].object);
             //// add foreground
             var children=this.tileChildren(name);
             this.tileLoader(children, true);
-            var neighbourCalls=this.tileNeighbours(name);
+
             for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
                 this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
             }
@@ -265,7 +273,7 @@ var wxs3 = wxs3 || {};
         // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
         for (var tc=tileColMin;tc<=tileColMax;tc++)
             for (var tr=tileRowMin;tr<=tileRowMax;tr++)
-                if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) >-1); else {
+                if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) ==-1) {
                     // Add tile to index over loaded tiles
                     this.foregroundTiles.push((name.zoom+1)+'_'+tr+'_'+tc); 
                     WMTSCalls.push(this.singleTileFetcher(tc, tr,this.foregroundMatrix));
@@ -284,7 +292,7 @@ var wxs3 = wxs3 || {};
         // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
         for (var tc=tileColMin;tc<=tileColMax;tc++)
             for (var tr=tileRowMin;tr<=tileRowMax;tr++)
-                if (this.backgroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) >-1); else {
+                if (this.backgroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) == -1) {
                     this.backgroundTiles.push(name.zoom+'_'+tr+'_'+tc);
                     WMTSCalls.push(this.singleTileFetcher(tc, tr,this.backgroundMatrix));
                 }
