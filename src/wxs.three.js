@@ -161,7 +161,7 @@ var wxs3 = wxs3 || {};
 
         // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
         // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-        var spanDivisor=2;
+        var spanDivisor=1;
         for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
             if(querySpanMinDim=='x'){
                 if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin/spanDivisor){
@@ -182,6 +182,7 @@ var wxs3 = wxs3 || {};
         this.tileLoader(WMTSCalls, false);
         for (var i=0;i< WMTSCalls.length;i++){
             this.mainTileLoader({zoom: WMTSCalls[i].zoom,tileRow: WMTSCalls[i].tileRow, tileCol: WMTSCalls[i].tileCol});
+
         }
 
     };
@@ -261,21 +262,21 @@ var wxs3 = wxs3 || {};
         this.intersects = this.raycaster.intersectObjects(this.backgroundGroup.children);        
         if (this.intersects.length > 0) {
             name=this.intersects[0].object.tileName;
-            this.intersects[0].object.processed=true;
-            this.backgroundGroup.remove(this.intersects[0].object);
             this.mainTileLoader(name);
             
         }
     }
     ns.ThreeDMap.prototype.mainTileLoader=function(name){
-        var neighbourCalls=this.tileNeighbours(name);
-        //// add foreground
+        var neighbourCalls=this.backGroundTileNeighbours(name);
+        // add foreground
         var children=this.tileChildren(name);
         this.tileLoader(children, true);
-
+        // add backgound
         for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
             this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
         }
+        // remove processed background
+        this.backgroundGroup.remove(this.backgroundGroup.getObjectByName(name.zoom+'_'+name.tileRow+'_'+name.tileCol));
     }
 
     ns.ThreeDMap.prototype.tileChildren=function(name){
@@ -289,7 +290,8 @@ var wxs3 = wxs3 || {};
         // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
         for (var tc=tileColMin;tc<=tileColMax;tc++)
             for (var tr=tileRowMin;tr<=tileRowMax;tr++)
-                if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) ==-1) {
+                //if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) ==-1) {
+                if (this.foregroundGroup.getObjectByName(name.zoom+'_'+tr+'_'+tc) == undefined) {
                     // Add tile to index over loaded tiles
                     this.foregroundTiles.push((name.zoom+1)+'_'+tr+'_'+tc); 
                     WMTSCalls.push(this.singleTileFetcher(tc, tr,this.foregroundMatrix));
@@ -297,7 +299,7 @@ var wxs3 = wxs3 || {};
         return WMTSCalls;
      }
 
-     ns.ThreeDMap.prototype.tileNeighbours=function(name){
+     ns.ThreeDMap.prototype.backGroundTileNeighbours=function(name){
         var WMTSCalls=[];
         var tileCol=name.tileCol;
         var tileRow=name.tileRow;
