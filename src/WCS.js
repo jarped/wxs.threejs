@@ -14,11 +14,14 @@ var wxs3 = wxs3 || {};
 
       ns.WCS.prototype.wcsFetcher = function ( WMTSCall) {
         var demTileRequest = new XMLHttpRequest();
+        demTileRequest.responseType = 'arraybuffer';
         demTileRequest.open('GET', WMTSCall.url.wcs, true);
         var that = this;
         demTileRequest.onreadystatechange = function () {
             if (this.readyState === 4) {
-                that.updateGeometry(this.responseText.split("\n"), that.geometry);
+				var tiffParser = new TIFFParser();
+				var tiffArray = tiffParser.parseTIFF(this.response);
+                that.updateGeometry(tiffArray[0], that.geometry);
             }
         };
         demTileRequest.send();
@@ -27,11 +30,18 @@ var wxs3 = wxs3 || {};
     ns.WCS.prototype.updateGeometry = function (xyzlines, geometry) {
         var i, length = geometry.vertices.length;
         for (i = 0; i < length; i = i + 1) {
-            var line = xyzlines[i].split(' ');
             // Back to just manipulating height for now.
-            geometry.vertices[i].z = line[2] ;
+            geometry.vertices[i].z = parseInt(xyzlines[i][0]) ;
         }
         // Mark geometry for update on next render.
+        geometry.loaded=true;
+        geometry.processed={
+            left: false,
+            right: false,
+            top: false,
+            bottom: false,
+            all: false
+        }
         geometry.verticesNeedUpdate=true;
         // Don't know if this helps, better to err on safe side.
         this.WCS=null;
