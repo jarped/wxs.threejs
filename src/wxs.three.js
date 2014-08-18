@@ -13,6 +13,7 @@ var wxs3 = wxs3 || {};
         this.backgroundMatrix=null;
         this.backgroundTiles=[];
         this.foregroundTiles=[];
+        this.
 
         // Setting demWidth and demHeight to some fraction of 256
         dim.demWidth=32;
@@ -56,6 +57,7 @@ var wxs3 = wxs3 || {};
         this.createControls();
         this.foregroundGroup = new THREE.Object3D();
         this.backgroundGroup = new THREE.Object3D();
+        this.foregroundGroup.scale.z=dim.zMult;
         this.scene.add(this.foregroundGroup);
         this.scene.add(this.backgroundGroup);
 
@@ -107,6 +109,9 @@ var wxs3 = wxs3 || {};
     };
 
     ns.ThreeDMap.prototype.render = function () {
+        for (var i =0; i< this.foregroundGroup.children.length; i++)
+            if (this.foregroundGroup.children[i].scale.z<1)
+                this.foregroundGroup.children[i].scale.z+=0.01;
         this.controls.update();
         window.requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
@@ -215,8 +220,9 @@ var wxs3 = wxs3 || {};
                 cache_WMTS: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tileRow+'&TileCol='+tileCol,
                 cache_wms: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wms?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+wmsBounds.join(',') ,
                 wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+wmsBounds.join(',') ,
-                //wcs 1.1.0 NOT WORKING with XYZ: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&FORMAT=XYZ&IDENTIFIER=all_50m&BOUNDINGBOX='+ wcsBounds.join(',')  +',urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridBaseCRS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridCS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=' +wmsBounds[0] +',' +wmsBounds[1] +'&GridOffsets='+grid2rasterUnitsX +',' +grid2rasterUnitsY + '&RangeSubset=50m:average' //[bands[1]]'
-                wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=geotiff&WIDTH='+parseInt(dim.demWidth)+'&HEIGHT='+parseInt(dim.demWidth)+ '&COVERAGE=all_50m&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ wcsBounds.join(',') //+ '&INTERPOLATION=BILINEAR' //+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1] //+ '&RangeSubset=50m:average[bands[1]]' +'&RESX='+grid2rasterUnitsX+'&RESY='+grid2rasterUnitsY
+                //wcs 1.1.0 NOT WORKING with XYZ - needs to drop xml-part to use tiff-js?
+                //wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&FORMAT=geotiff&IDENTIFIER=all_50m&BOUNDINGBOX='+ wcsBounds.join(',')  +',urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridBaseCRS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridCS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=' +wmsBounds[0] +',' +wmsBounds[1] +'&GridOffsets='+grid2rasterUnitsX +',' +grid2rasterUnitsY + '&RangeSubset=50m:average' //[bands[1]]'
+                wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=geotiff&WIDTH='+parseInt(dim.demWidth)+'&HEIGHT='+parseInt(dim.demWidth)+ '&COVERAGE=all_50m&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ wcsBounds.join(',') // + '&INTERPOLATION=BILINEAR' //+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1] //+ '&RangeSubset=50m:average[bands[1]]' +'&RESX='+grid2rasterUnitsX+'&RESY='+grid2rasterUnitsY
             },
             bounds: {
                 minx: wmsBounds[0],
@@ -345,7 +351,7 @@ var wxs3 = wxs3 || {};
             this.mesh.name=concatName;
             this.mesh.bounds=WMTSCalls[i].bounds;
             this.mesh.url=WMTSCalls[i].url;
-            this.mesh.scale.z=dim.zMult;          
+            this.mesh.scale.z=0.1;
             this.tileLoaded(this.mesh, visible);
         };
     };

@@ -52,7 +52,7 @@ var wxs3 = wxs3 || {};
         for (i = 0; i < length; i = i + 1) {
 
             // Back to just manipulating height for now.
-            geometry.vertices[i].z = xyzlines[i][0]; ;
+            geometry.vertices[i].z = parseInt(xyzlines[i][0]) ;
         }
         // Mark geometry for update on next render.
         geometry.verticesNeedUpdate=true;
