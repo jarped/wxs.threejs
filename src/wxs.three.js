@@ -13,6 +13,7 @@ var wxs3 = wxs3 || {};
         this.backgroundMatrix=null;
         this.backgroundTiles=[];
         this.foregroundTiles=[];
+        this.foregroundTilesIndex=[];
         this.
 
         // Setting demWidth and demHeight to some fraction of 256
@@ -109,9 +110,18 @@ var wxs3 = wxs3 || {};
     };
 
     ns.ThreeDMap.prototype.render = function () {
+        
         for (var i =0; i< this.foregroundGroup.children.length; i++)
-            if (this.foregroundGroup.children[i].scale.z<1 && this.foregroundGroup.children[i].geometry.loaded==true)
+            if (this.foregroundGroup.children[i].scale.z<1 && this.foregroundGroup.children[i].geometry.loaded==true){
                 this.foregroundGroup.children[i].scale.z+=0.02;
+            }
+            else if (this.foregroundGroup.children[i].scale.z>=1){
+                if (this.foregroundGroup.children[i].geometry.processed['all']==false){
+                    console.log(this.foregroundGroup.children[i].geometry.processed);
+                    this.neighbourTest(this.foregroundGroup.children[i].WMTSCall);
+                }
+            }
+        
         this.controls.update();
         window.requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
@@ -311,33 +321,19 @@ var wxs3 = wxs3 || {};
                 
                 // Hack for CORS?
                 THREE.ImageUtils.crossOrigin = "";
-                // Keep this for future reference
-                /*
-                // Check for neighbours
-                if (this.foregroundTiles.indexOf(WMTSCalls[i].zoom+'_'+ (WMTSCalls[i].tileRow-1) +'_'+WMTSCalls[i].tileCol) > -1) {
-                    //console.log('has neighbour left');
-                }
-                if (this.foregroundTiles.indexOf(WMTSCalls[i].zoom+'_'+ (WMTSCalls[i].tileRow+1) +'_'+WMTSCalls[i].tileCol) > -1) {
-                    //console.log('has neighbour right');
-                }
-                if (this.foregroundTiles.indexOf(WMTSCalls[i].zoom+'_'+ WMTSCalls[i].tileRow +'_'+(WMTSCalls[i].tileCol -1)) > -1) {
-                    //console.log('has neighbour top');
-                }
-                if (this.foregroundTiles.indexOf(WMTSCalls[i].zoom+'_'+ WMTSCalls[i].tileRow +'_'+(WMTSCalls[i].tileCol +1)) > -1) {
-                    //console.log('has neighbour bottom');
-                }
-                */
+
                 var WCSTile =new ns.WCS( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY,dim.demWidth-1, dim.demHeight-1);
                 WCSTile.wcsFetcher( WMTSCalls[i]);
                 var geometry=WCSTile.geometry;
                 var material= new THREE.MeshBasicMaterial(
-            {
-                map: THREE.ImageUtils.loadTexture(
-                    WMTSCalls[i].url.cache_WMTS,
-                    new THREE.UVMapping()
-                ),
-                side: THREE.DoubleSide
-            });
+                    {
+                        map: THREE.ImageUtils.loadTexture(
+                            WMTSCalls[i].url.cache_WMTS,
+                            new THREE.UVMapping()
+                        ),
+                        side: THREE.DoubleSide
+                    }
+                );
             }
             else{
                 var geometry = new THREE.PlaneGeometry( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY);
@@ -358,7 +354,9 @@ var wxs3 = wxs3 || {};
             this.mesh.name=concatName;
             this.mesh.bounds=WMTSCalls[i].bounds;
             this.mesh.url=WMTSCalls[i].url;
-            this.mesh.scale.z=0.01;
+            this.mesh.scale.z=0.02;
+            //this.mesh.scale.z=1;
+            this.mesh.WMTSCall=WMTSCalls[i];
             this.tileLoaded(this.mesh, visible);
         };
     };
@@ -366,8 +364,87 @@ var wxs3 = wxs3 || {};
     ns.ThreeDMap.prototype.tileLoaded = function (tile, visible) {
         tile.visible=visible;
         if (visible)
+        {
             this.foregroundGroup.add(tile);
+            // This must be moved to another place. Neighbours will never both have final geometry at this point.
+            //this.neighbourTest(tile.WMTSCall);
+        }
         else
+        {
             this.backgroundGroup.add(tile);
+        }
     };
+    ns.ThreeDMap.prototype.neighbourTest = function (WMTSCall) {
+                // Keep this for future reference
+                
+                var name=WMTSCall.zoom+'_'+ (WMTSCall.tileRow) +'_'+WMTSCall.tileCol;
+                var neighbourTop=WMTSCall.zoom+'_'+ (WMTSCall.tileRow-1) +'_'+WMTSCall.tileCol;
+                var neighbourBottom=WMTSCall.zoom+'_'+ (WMTSCall.tileRow+1) +'_'+WMTSCall.tileCol;
+                var neighbourLeft=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol -1);
+                var neighbourRight=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol +1);
+                
+                /*
+                var name=WMTSCall.zoom+'_'+ (WMTSCall.tileRow) +'_'+WMTSCall.tileCol;                
+                var neighbourLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow-1) +'_'+WMTSCall.tileCol;
+                var neighbourRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow+1) +'_'+WMTSCall.tileCol;
+                var neighbourTop=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol -1);
+                var neighbourBottom=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol +1);
+                */
+                var tmpNeighbour;
+                this.geometryTester(name,neighbourLeft, 'left');
+                this.geometryTester(name,neighbourRight,'right');
+                this.geometryTester(name,neighbourTop,'top');
+                this.geometryTester(name,neighbourBottom,'bottom');
+
+    };
+        ns.ThreeDMap.prototype.geometryTester= function (name,neighbourName, placement) {
+            if (this.foregroundGroup.getObjectByName(neighbourName)) {
+                // This is never true right now. Needs to be called from another place.
+                var tile=this.foregroundGroup.getObjectByName(name);
+                var neighbour=this.foregroundGroup.getObjectByName(neighbourName);
+                if (neighbour.geometry.loaded==true){
+                    if(tile.geometry.loaded==true) {
+                        console.log('has neighbour ' +placement + ' ' + neighbourName)
+                        this.geometryFixer(tile, neighbour, placement);
+                    }
+                }
+            }
+        }
+        ns.ThreeDMap.prototype.geometryFixer= function (tile, neighbour, placement) {
+            //console.log('fixing geometry for ' + name + ', ' + neighbourName);
+
+            var oppositeEdge;
+            if (placement=='left')
+                oppositeEdge='right'
+            else if (placement=='right')
+                oppositeEdge='left';
+            else if (placement=='top')
+                oppositeEdge='bottom';
+            else if (placement=='bottom')
+                oppositeEdge='top';
+            
+            for (var i =0; i< this.edges[placement].length;i++){
+                console.log('tile pre: ')
+                console.log(tile.geometry.vertices[this.edges[placement][i]].z)
+                console.log('neighbour pre: ')
+                console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
+
+                tile.geometry.vertices[this.edges[placement][i]].z=(tile.geometry.vertices[this.edges[placement][i]].z+neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z)/2;
+                neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z=tile.geometry.vertices[this.edges[placement][i]].z;
+                
+                console.log('tile post: ')
+                console.log(tile.geometry.vertices[this.edges[placement][i]].z)
+
+                console.log('neighbour post: ')
+                console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
+            }
+            tile.geometry.verticesNeedUpdate=true;
+            neighbour.geometry.verticesNeedUpdate=true;
+            tile.geometry.processed[placement]=true;
+            neighbour.geometry.processed[oppositeEdge]=true;
+            if (tile.geometry.processed['top']==tile.geometry.processed['bottom']==tile.geometry.processed['left']==tile.geometry.processed['right'])
+                tile.geometry.processed['all']=true;
+            if (neighbour.geometry.processed['top']==neighbour.geometry.processed['bottom']==neighbour.geometry.processed['left']==neighbour.geometry.processed['right'])
+                neighbour.geometry.processed['all']=true;                
+        }
 }(wxs3));
