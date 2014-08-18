@@ -180,6 +180,9 @@ var wxs3 = wxs3 || {};
         var tmpBounds=new THREE.Vector2((bounds.maxx+bounds.minx)/2, (bounds.maxy+bounds.miny)/2);
         WMTSCalls=this.centralTileFetcher(tmpBounds, this.backgroundMatrix);
         this.tileLoader(WMTSCalls, false);
+        for (var i=0;i< WMTSCalls.length;i++){
+            this.mainTileLoader({zoom: WMTSCalls[i].zoom,tileRow: WMTSCalls[i].tileRow, tileCol: WMTSCalls[i].tileCol});
+        }
 
     };
     
@@ -258,18 +261,21 @@ var wxs3 = wxs3 || {};
         this.intersects = this.raycaster.intersectObjects(this.backgroundGroup.children);        
         if (this.intersects.length > 0) {
             name=this.intersects[0].object.tileName;
-            var neighbourCalls=this.tileNeighbours(name);
-
             this.intersects[0].object.processed=true;
             this.backgroundGroup.remove(this.intersects[0].object);
-            //// add foreground
-            var children=this.tileChildren(name);
-            this.tileLoader(children, true);
+            this.mainTileLoader(name);
+            
+        }
+    }
+    ns.ThreeDMap.prototype.mainTileLoader=function(name){
+        var neighbourCalls=this.tileNeighbours(name);
+        //// add foreground
+        var children=this.tileChildren(name);
+        this.tileLoader(children, true);
 
-            for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
-                this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
-            }
-            }
+        for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
+            this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
+        }
     }
 
     ns.ThreeDMap.prototype.tileChildren=function(name){
