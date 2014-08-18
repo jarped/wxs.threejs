@@ -19,8 +19,8 @@ var wxs3 = wxs3 || {};
         dim.demWidth=32;
         dim.demHeight=dim.demWidth;
         
-        // Lets make some indexes with vertice-positions corresponding to edges. 
-        // Not in user, but keep for future reference
+        // Lets make some indexes with vertice-positions corresponding to edges.
+        // TODO: make corner-indexes
         this.edges={
             top: [],
             left: [],
@@ -116,7 +116,6 @@ var wxs3 = wxs3 || {};
             }
             else if (this.foregroundGroup.children[i].scale.z>=1){
                 if (this.foregroundGroup.children[i].geometry.processed['all']==false){
-                    //console.log(this.foregroundGroup.children[i].geometry.processed);
                     this.neighbourTest(this.foregroundGroup.children[i].WMTSCall);
                 }
             }
@@ -324,13 +323,13 @@ var wxs3 = wxs3 || {};
                 var WCSTile =new ns.WCS( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY,dim.demWidth-1, dim.demHeight-1);
                 WCSTile.wcsFetcher( WMTSCalls[i]);
                 var geometry=WCSTile.geometry;
-                        geometry.processed={
-                            left: false,
-                            right: false,
-                            top: false,
-                            bottom: false,
-                            all: false
-                        }
+                geometry.processed={
+                    left: false,
+                    right: false,
+                    top: false,
+                    bottom: false,
+                    all: false
+                }
                 var material= new THREE.MeshBasicMaterial(
                     {
                         map: THREE.ImageUtils.loadTexture(
@@ -361,7 +360,6 @@ var wxs3 = wxs3 || {};
             this.mesh.bounds=WMTSCalls[i].bounds;
             this.mesh.url=WMTSCalls[i].url;
             this.mesh.scale.z=0.02;
-            //this.mesh.scale.z=1;
             this.mesh.WMTSCall=WMTSCalls[i];
             this.tileLoaded(this.mesh, visible);
         };
@@ -372,8 +370,6 @@ var wxs3 = wxs3 || {};
         if (visible)
         {
             this.foregroundGroup.add(tile);
-            // This must be moved to another place. Neighbours will never both have final geometry at this point.
-            //this.neighbourTest(tile.WMTSCall);
         }
         else
         {
@@ -381,22 +377,20 @@ var wxs3 = wxs3 || {};
         }
     };
     ns.ThreeDMap.prototype.neighbourTest = function (WMTSCall) {
-                // Keep this for future reference
-                
                 var name=WMTSCall.zoom+'_'+ (WMTSCall.tileRow) +'_'+WMTSCall.tileCol;
                 var neighbourTop=WMTSCall.zoom+'_'+ (WMTSCall.tileRow-1) +'_'+WMTSCall.tileCol;
                 var neighbourBottom=WMTSCall.zoom+'_'+ (WMTSCall.tileRow+1) +'_'+WMTSCall.tileCol;
                 var neighbourLeft=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol -1);
                 var neighbourRight=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol +1);
-                
+
+                // TODO: These need to be tested and averaged as well
                 /*
-                var name=WMTSCall.zoom+'_'+ (WMTSCall.tileRow) +'_'+WMTSCall.tileCol;                
-                var neighbourLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow-1) +'_'+WMTSCall.tileCol;
-                var neighbourRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow+1) +'_'+WMTSCall.tileCol;
-                var neighbourTop=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol -1);
-                var neighbourBottom=WMTSCall.zoom+'_'+ WMTSCall.tileRow +'_'+(WMTSCall.tileCol +1);
+                var neighbourTopLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+(WMTSCall.tileCol -1);
+                var neighbourTopRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+ (WMTSCall.tileCol; +1)
+                var neighbourBottomLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol -1);
+                var neighbourBottomRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol +1);
                 */
-                var tmpNeighbour;
+
                 this.geometryTester(name,neighbourLeft, 'left');
                 this.geometryTester(name,neighbourRight,'right');
                 this.geometryTester(name,neighbourTop,'top');
@@ -405,20 +399,16 @@ var wxs3 = wxs3 || {};
     };
         ns.ThreeDMap.prototype.geometryTester= function (name,neighbourName, placement) {
             if (this.foregroundGroup.getObjectByName(neighbourName)) {
-                // This is never true right now. Needs to be called from another place.
                 var tile=this.foregroundGroup.getObjectByName(name);
                 var neighbour=this.foregroundGroup.getObjectByName(neighbourName);
                 if (neighbour.geometry.loaded==true){
                     if(tile.geometry.loaded==true) {
-                        //console.log('has neighbour ' +placement + ' ' + neighbourName)
                         this.geometryFixer(tile, neighbour, placement);
                     }
                 }
             }
         }
         ns.ThreeDMap.prototype.geometryFixer= function (tile, neighbour, placement) {
-            //console.log('fixing geometry for ' + name + ', ' + neighbourName);
-
             var oppositeEdge;
             if (placement=='left')
                 oppositeEdge='right'
@@ -430,21 +420,8 @@ var wxs3 = wxs3 || {};
                 oppositeEdge='top';
             
             for (var i =0; i< this.edges[placement].length;i++){
-                /*
-                console.log('tile pre: ')
-                console.log(tile.geometry.vertices[this.edges[placement][i]].z)
-                console.log('neighbour pre: ')
-                console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
-                */
                 tile.geometry.vertices[this.edges[placement][i]].z=(tile.geometry.vertices[this.edges[placement][i]].z+neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z)/2;
                 neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z=tile.geometry.vertices[this.edges[placement][i]].z;
-                /*
-                console.log('tile post: ')
-                console.log(tile.geometry.vertices[this.edges[placement][i]].z)
-
-                console.log('neighbour post: ')
-                console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
-                */
             }
             tile.geometry.verticesNeedUpdate=true;
             neighbour.geometry.verticesNeedUpdate=true;
