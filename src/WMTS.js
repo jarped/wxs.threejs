@@ -57,22 +57,22 @@ var wxs3 = wxs3 || {};
           while (thisNode) {
             // Populate tileMatrixSet
             tileMatrixSet.push({
-                Identifier: thisNode.childNodes[3].textContent,
-                ScaleDenominator: parseFloat(thisNode.childNodes[5].textContent),
+                Identifier: thisNode.getElementsByTagName('Identifier')[0].textContent,
+                ScaleDenominator: parseFloat(thisNode.getElementsByTagName('ScaleDenominator')[0].textContent),
                 TopLeftCorner: { 
-                    minx: parseFloat(thisNode.childNodes[7].textContent.split(' ')[0]),
-                    maxy: parseFloat(thisNode.childNodes[7].textContent.split(' ')[1]),
+                    minx: parseFloat(thisNode.getElementsByTagName('TopLeftCorner')[0].textContent.split(' ')[0]),
+                    maxy: parseFloat(thisNode.getElementsByTagName('TopLeftCorner')[0].textContent.split(' ')[1]),
                 },
-                TileWidth: parseInt(thisNode.childNodes[9].textContent),
-                TileHeight: parseInt(thisNode.childNodes[11].textContent),
-                MatrixWidth: parseInt(thisNode.childNodes[13].textContent),
-                MatrixHeight: parseInt(thisNode.childNodes[15].textContent),
+                TileWidth: parseInt(thisNode.getElementsByTagName('TileWidth')[0].textContent),
+                TileHeight: parseInt(thisNode.getElementsByTagName('TileHeight')[0].textContent),
+                MatrixWidth: parseInt(thisNode.getElementsByTagName('MatrixWidth')[0].textContent),
+                MatrixHeight: parseInt(thisNode.getElementsByTagName('MatrixHeight')[0].textContent),
                 // These are the two central numbers we need to calculate:
                 // scaledenominator*pixelsize*tilewidth
-                TileSpanX: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[9].textContent),
+                TileSpanX: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent*pixelsize)*thisNode.getElementsByTagName('TileWidth')[0].textContent),
                 // scaledenominator*pixelsize*tileheight
-                TileSpanY: parseFloat((thisNode.childNodes[5].textContent*pixelsize)*thisNode.childNodes[11].textContent),
-                Zoom: parseInt(thisNode.childNodes[3].textContent.split(':').slice(-1)[0])
+                TileSpanY: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent*pixelsize)*thisNode.getElementsByTagName('TileHeight')[0].textContent),
+                Zoom: parseInt(thisNode.getElementsByTagName('Identifier')[0].textContent.split(':').slice(-1)[0])
             });
             thisNode = iterator.iterateNext();
           } 

@@ -110,8 +110,8 @@ var wxs3 = wxs3 || {};
 
     ns.ThreeDMap.prototype.render = function () {
         for (var i =0; i< this.foregroundGroup.children.length; i++)
-            if (this.foregroundGroup.children[i].scale.z<1)
-                this.foregroundGroup.children[i].scale.z+=0.01;
+            if (this.foregroundGroup.children[i].scale.z<1 && this.foregroundGroup.children[i].geometry.loaded==true)
+                this.foregroundGroup.children[i].scale.z+=0.02;
         this.controls.update();
         window.requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
@@ -242,19 +242,16 @@ var wxs3 = wxs3 || {};
         this.intersects = this.raycaster.intersectObjects(this.backgroundGroup.children);        
         if (this.intersects.length > 0) {
             name=this.intersects[0].object.tileName;
-            if(!this.intersects[0].object.processed)
-            {
-                this.intersects[0].object.processed=true;
-                this.backgroundGroup.remove(this.intersects[0].object);
-                //// add foreground
-                var children=this.tileChildren(name);
-                this.tileLoader(children, true);
-                var neighbourCalls=this.tileNeighbours(name);
-                for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
-                    this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
-                }
+            this.intersects[0].object.processed=true;
+            this.backgroundGroup.remove(this.intersects[0].object);
+            //// add foreground
+            var children=this.tileChildren(name);
+            this.tileLoader(children, true);
+            var neighbourCalls=this.tileNeighbours(name);
+            for (var neighbourCall =0; neighbourCall< neighbourCalls.length; neighbourCall ++){
+                this.tileLoader([ neighbourCalls[neighbourCall] ], false) ;
             }
-        }
+            }
     }
 
     ns.ThreeDMap.prototype.tileChildren=function(name){
@@ -351,7 +348,7 @@ var wxs3 = wxs3 || {};
             this.mesh.name=concatName;
             this.mesh.bounds=WMTSCalls[i].bounds;
             this.mesh.url=WMTSCalls[i].url;
-            this.mesh.scale.z=0.1;
+            this.mesh.scale.z=0.01;
             this.tileLoaded(this.mesh, visible);
         };
     };

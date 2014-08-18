@@ -55,6 +55,7 @@ var wxs3 = wxs3 || {};
             geometry.vertices[i].z = parseInt(xyzlines[i][0]) ;
         }
         // Mark geometry for update on next render.
+        geometry.loaded=true;
         geometry.verticesNeedUpdate=true;
         // Don't know if this helps, better to err on safe side.
         this.WCS=null;

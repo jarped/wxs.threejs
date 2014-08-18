@@ -156,7 +156,7 @@ TIFFParser.prototype = {
 		if (fieldTag in fieldTagNames) {
 			fieldTagName = fieldTagNames[fieldTag];
 		} else {
-			console.log( "Unknown Field Tag:", fieldTag);
+			//console.log( "Unknown Field Tag:", fieldTag);
 			fieldTagName = "Tag" + fieldTag;
 		}
 
@@ -361,7 +361,7 @@ TIFFParser.prototype = {
 
 		var fileDirectory = this.fileDirectories[0];
 
-		console.log( fileDirectory );
+		//console.log( fileDirectory );
 
 		var imageWidth = fileDirectory.ImageWidth.values[0];
 		var imageLength = fileDirectory.ImageLength.values[0];
@@ -561,7 +561,7 @@ TIFFParser.prototype = {
 //			console.log( strips[i] );
 		}
 
-		console.log( strips );
+		//console.log( strips );
         return strips;
 
 		if (canvas.getContext) {
