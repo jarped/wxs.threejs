@@ -117,7 +117,7 @@ var wxs3 = wxs3 || {};
             }
             else if (this.foregroundGroup.children[i].scale.z>=1){
                 if (this.foregroundGroup.children[i].geometry.processed['all']==false){
-                    console.log(this.foregroundGroup.children[i].geometry.processed);
+                    //console.log(this.foregroundGroup.children[i].geometry.processed);
                     this.neighbourTest(this.foregroundGroup.children[i].WMTSCall);
                 }
             }
@@ -163,7 +163,7 @@ var wxs3 = wxs3 || {};
 
         // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
         // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-        var spanDivisor=1;
+        var spanDivisor=2;
         for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
             if(querySpanMinDim=='x'){
                 if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin/spanDivisor){
@@ -404,7 +404,7 @@ var wxs3 = wxs3 || {};
                 var neighbour=this.foregroundGroup.getObjectByName(neighbourName);
                 if (neighbour.geometry.loaded==true){
                     if(tile.geometry.loaded==true) {
-                        console.log('has neighbour ' +placement + ' ' + neighbourName)
+                        //console.log('has neighbour ' +placement + ' ' + neighbourName)
                         this.geometryFixer(tile, neighbour, placement);
                     }
                 }
@@ -424,19 +424,21 @@ var wxs3 = wxs3 || {};
                 oppositeEdge='top';
             
             for (var i =0; i< this.edges[placement].length;i++){
+                /*
                 console.log('tile pre: ')
                 console.log(tile.geometry.vertices[this.edges[placement][i]].z)
                 console.log('neighbour pre: ')
                 console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
-
+                */
                 tile.geometry.vertices[this.edges[placement][i]].z=(tile.geometry.vertices[this.edges[placement][i]].z+neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z)/2;
                 neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z=tile.geometry.vertices[this.edges[placement][i]].z;
-                
+                /*
                 console.log('tile post: ')
                 console.log(tile.geometry.vertices[this.edges[placement][i]].z)
 
                 console.log('neighbour post: ')
                 console.log(neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z);
+                */
             }
             tile.geometry.verticesNeedUpdate=true;
             neighbour.geometry.verticesNeedUpdate=true;
