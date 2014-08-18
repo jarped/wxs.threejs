@@ -194,12 +194,14 @@ var wxs3 = wxs3 || {};
         var TileSpanY=activeMatrix.TileSpanY;
         var TileSpanX=activeMatrix.TileSpanX;
         var wcsDivisor=2;
+        var grid2rasterUnitsX=((TileSpanX/(this.dim.demHeight-1)));
+        var grid2rasterUnitsY=((TileSpanY/(this.dim.demWidth-1)));
         var wcsBounds = [
         // Add some to the extents as we need to put values from a raster onto a grid. Bazingah!
-            (wmsBounds[0] - ((TileSpanX/(this.dim.demHeight-1)))/wcsDivisor), //minx
-            (wmsBounds[1] - ((TileSpanY/(this.dim.demWidth-1)))/wcsDivisor), //miny
-            (wmsBounds[2] + ((TileSpanX/(this.dim.demHeight-1)))/wcsDivisor), //maxx
-            (wmsBounds[3] + ((TileSpanY/(this.dim.demWidth-1)))/wcsDivisor) //maxy
+            (wmsBounds[0] - (grid2rasterUnitsX/wcsDivisor)), //minx
+            (wmsBounds[1] - (grid2rasterUnitsY/wcsDivisor)), //miny
+            (wmsBounds[2] + (grid2rasterUnitsX/wcsDivisor)), //maxx
+            (wmsBounds[3] +  (grid2rasterUnitsY/wcsDivisor)) //maxy
         ];
         WMTSCall={
             tileSpanX: TileSpanX,
@@ -213,7 +215,8 @@ var wxs3 = wxs3 || {};
                 cache_WMTS: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Layer=topo2&Style=default&Format=image/png&TileMatrixSet=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&TileMatrix='+activeMatrix.Identifier+'&TileRow='+tileRow+'&TileCol='+tileCol,
                 cache_wms: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wms?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+wmsBounds.join(',') ,
                 wms: 'http://openwms.statkart.no/skwms1/wms.topo2?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+wmsBounds.join(',') ,
-                wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=XYZ&WIDTH='+dim.demWidth+'&HEIGHT='+dim.demWidth+ '&COVERAGE=all_50m&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ wcsBounds.join(',')
+                //wcs 1.1.0 NOT WORKING with XYZ: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&FORMAT=XYZ&IDENTIFIER=all_50m&BOUNDINGBOX='+ wcsBounds.join(',')  +',urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridBaseCRS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridCS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=' +wmsBounds[0] +',' +wmsBounds[1] +'&GridOffsets='+grid2rasterUnitsX +',' +grid2rasterUnitsY + '&RangeSubset=50m:average' //[bands[1]]'
+                wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=geotiff&WIDTH='+parseInt(dim.demWidth)+'&HEIGHT='+parseInt(dim.demWidth)+ '&COVERAGE=all_50m&crs=EPSG:'+activeMatrix.Identifier.split(':')[1]+'&BBOX='+ wcsBounds.join(',') //+ '&INTERPOLATION=BILINEAR' //+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1] //+ '&RangeSubset=50m:average[bands[1]]' +'&RESX='+grid2rasterUnitsX+'&RESY='+grid2rasterUnitsY
             },
             bounds: {
                 minx: wmsBounds[0],
