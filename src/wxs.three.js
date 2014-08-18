@@ -153,15 +153,17 @@ var wxs3 = wxs3 || {};
 
         // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
         // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
+        var spanDivisor=1;
         for (var tileMatrix=0; tileMatrix < tileMatrixCount; tileMatrix++){
-            if(querySpanMinDim='x')
-                if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin/1){
+            if(querySpanMinDim=='x'){
+                if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin/spanDivisor){
                     this.foregroundMatrix=tileMatrixSet[tileMatrix];
                     this.backgroundMatrix=tileMatrixSet[tileMatrix-1];
                     break;
                 }
+            }
             else
-                if (tileMatrixSet[tileMatrix].TileSpanX<querySpanMin/1){
+                if (tileMatrixSet[tileMatrix].TileSpanY<querySpanMin/spanDivisor){
                     this.foregroundMatrix=tileMatrixSet[tileMatrix];
                     this.backgroundMatrix=tileMatrixSet[tileMatrix-1];
                     break;
