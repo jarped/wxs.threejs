@@ -28,28 +28,28 @@ var wxs3 = wxs3 || {};
             bottom: []
         };
         var length=dim.demWidth*dim.demHeight;
-        for (var i=0; i<length; i++)
-            if (i<this.dim.demWidth) {
-                this.edges.top.push(i);
-                if (i==0){
-                    this.edges.left.push(i);
-                }
-                else if (i==this.dim.demWidth-1) {
-                    this.edges.right.push(i);
-                }
+        for (var i=0; i<length; i++) {
+          if (i < this.dim.demWidth) {
+            this.edges.top.push(i);
+            if (i == 0) {
+              this.edges.left.push(i);
             }
-            else if (i>=length-this.dim.demWidth) {
-                this.edges.bottom.push(i);
-                if (i==length-this.dim.demWidth){
-                    this.edges.left.push(i);
-                }
-                else if (i==length-1) {
-                    this.edges.right.push(i);
-                }
+            else if (i == this.dim.demWidth - 1) {
+              this.edges.right.push(i);
             }
-            else if ( i % this.dim.demWidth ==0 ) this.edges.left.push(i);
-            else if ((i+1) % this.dim.demWidth ==0 ) this.edges.right.push(i);
-
+          }
+          else if (i >= length - this.dim.demWidth) {
+            this.edges.bottom.push(i);
+            if (i == length - this.dim.demWidth) {
+              this.edges.left.push(i);
+            }
+            else if (i == length - 1) {
+              this.edges.right.push(i);
+            }
+          }
+          else if (i % this.dim.demWidth == 0) this.edges.left.push(i);
+          else if ((i + 1) % this.dim.demWidth == 0) this.edges.right.push(i);
+        }
         this.dim.wmsLayers = layers;
         this.createRenderer();
         this.createScene();
@@ -206,7 +206,7 @@ var wxs3 = wxs3 || {};
                 }
             }
         return WMTSCalls;
-    }
+    };
     
     ns.ThreeDMap.prototype.singleTileFetcher = function (tileCol, tileRow, activeMatrix){
         var WMTSCall=null;
@@ -250,9 +250,9 @@ var wxs3 = wxs3 || {};
                 maxx: wmsBounds[2],
                 maxy: wmsBounds[3] 
             }
-        }
+        };
     return WMTSCall;
-    }
+    };
 
     ns.ThreeDMap.prototype.caster=function(){
         var name=null;
@@ -265,7 +265,7 @@ var wxs3 = wxs3 || {};
             this.mainTileLoader(name);
             
         }
-    }
+    };
     ns.ThreeDMap.prototype.mainTileLoader=function(name){
         var neighbourCalls=this.backGroundTileNeighbours(name);
         // add foreground
@@ -277,7 +277,7 @@ var wxs3 = wxs3 || {};
         }
         // remove processed background
         this.backgroundGroup.remove(this.backgroundGroup.getObjectByName(name.zoom+'_'+name.tileRow+'_'+name.tileCol));
-    }
+    };
 
     ns.ThreeDMap.prototype.tileChildren=function(name){
         var WMTSCalls=[];
@@ -297,7 +297,7 @@ var wxs3 = wxs3 || {};
                     WMTSCalls.push(this.singleTileFetcher(tc, tr,this.foregroundMatrix));
                 }
         return WMTSCalls;
-     }
+     };
 
      ns.ThreeDMap.prototype.backGroundTileNeighbours=function(name){
         var WMTSCalls=[];
@@ -315,7 +315,7 @@ var wxs3 = wxs3 || {};
                     WMTSCalls.push(this.singleTileFetcher(tc, tr,this.backgroundMatrix));
                 }
         return WMTSCalls;
-    }
+    };
 
     ns.ThreeDMap.prototype.tileLoader = function (WMTSCalls, visible) {
         for (var i = 0; i<WMTSCalls.length;i++){
@@ -330,15 +330,15 @@ var wxs3 = wxs3 || {};
 
                 var WCSTile =new ns.WCS( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY,dim.demWidth-1, dim.demHeight-1);
                 WCSTile.wcsFetcher( WMTSCalls[i]);
-                var geometry=WCSTile.geometry;
+                geometry=WCSTile.geometry;
                 geometry.processed={
                     left: false,
                     right: false,
                     top: false,
                     bottom: false,
                     all: false
-                }
-                var material= new THREE.MeshBasicMaterial(
+                };
+                material= new THREE.MeshBasicMaterial(
                     {
                         map: THREE.ImageUtils.loadTexture(
                             WMTSCalls[i].url.cache_WMTS,
@@ -349,8 +349,8 @@ var wxs3 = wxs3 || {};
                 );
             }
             else{
-                var geometry = new THREE.PlaneGeometry( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY);
-                var material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+                geometry = new THREE.PlaneGeometry( WMTSCalls[i].tileSpanX,  WMTSCalls[i].tileSpanY);
+                material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
                 
             }
             this.mesh =  new THREE.Mesh(
@@ -363,14 +363,14 @@ var wxs3 = wxs3 || {};
                 zoom: WMTSCalls[i].zoom,
                 tileRow: WMTSCalls[i].tileRow,
                 tileCol: WMTSCalls[i].tileCol
-            }          
+            };
             this.mesh.name=concatName;
             this.mesh.bounds=WMTSCalls[i].bounds;
             this.mesh.url=WMTSCalls[i].url;
             this.mesh.scale.z=0.02;
             this.mesh.WMTSCall=WMTSCalls[i];
             this.tileLoaded(this.mesh, visible);
-        };
+        }
     };
     
     ns.ThreeDMap.prototype.tileLoaded = function (tile, visible) {
@@ -415,11 +415,11 @@ var wxs3 = wxs3 || {};
                     }
                 }
             }
-        }
+        };
         ns.ThreeDMap.prototype.geometryFixer= function (tile, neighbour, placement) {
             var oppositeEdge;
             if (placement=='left')
-                oppositeEdge='right'
+                oppositeEdge='right';
             else if (placement=='right')
                 oppositeEdge='left';
             else if (placement=='top')

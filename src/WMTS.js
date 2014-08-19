@@ -81,17 +81,18 @@ var wxs3 = wxs3 || {};
           console.log( 'Error: An error occured during iteration ' + e );
         }
         return tileMatrixSet;
-    }
+    };
 
     ns.WMTS.prototype.txt2xml = function (xmltxt) {
+      var xmlDoc;
         if(window.DOMParser){
             // non i.e. browser
             var xmlparser = new DOMParser();
-            var xmlDoc = xmlparser.parseFromString(xmltxt, "text/xml");
+            xmlDoc = xmlparser.parseFromString(xmltxt, "text/xml");
         }
         else{
             // i.e. browser 
-            var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
             xmlDoc.async = false;
             xmlDoc.loadXML(xmltxt);
         }

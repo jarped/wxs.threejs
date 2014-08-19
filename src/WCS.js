@@ -25,7 +25,7 @@ var wxs3 = wxs3 || {};
             }
         };
         demTileRequest.send();
-    }
+    };
 
     ns.WCS.prototype.updateGeometry = function (xyzlines, geometry) {
         var i, length = geometry.vertices.length;
