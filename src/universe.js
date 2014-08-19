@@ -39,6 +39,7 @@ Dim = {
   maxx: 0,
   miny: 0,
   maxy: 0,
+  Z:0,
   getBounds: function () {
     return {
       minx: this.minx,

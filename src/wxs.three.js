@@ -88,7 +88,7 @@ var wxs3 = wxs3 || {};
       5000000
     );
     // Some trig to find height for camera
-    if (this.dim.Z) {
+    if (!!this.dim.Z) {
       cameraHeight = this.dim.Z;
     } else {
       cameraHeight = (this.dim.metersHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
@@ -255,36 +255,36 @@ var wxs3 = wxs3 || {};
   };
 
   ns.ThreeDMap.prototype.caster = function () {
-    var name = null;
+    var tileName = null;
     this.vector = new THREE.Vector3(0, 0, -1);
     this.vector.applyQuaternion(this.camera.quaternion);
     this.raycaster = new THREE.Raycaster(this.camera.position, this.vector);
     this.intersects = this.raycaster.intersectObjects(this.backgroundGroup.children);
     if (this.intersects.length > 0) {
-      name = this.intersects[0].object.tileName;
-      this.mainTileLoader(name);
+      tileName = this.intersects[0].object.tileName;
+      this.mainTileLoader(tileName);
 
     }
   };
-  ns.ThreeDMap.prototype.mainTileLoader = function (name) {
+  ns.ThreeDMap.prototype.mainTileLoader = function (tileName) {
     var neighbourCall;
-    var neighbourCalls = this.backGroundTileNeighbours(name);
+    var neighbourCalls = this.backGroundTileNeighbours(tileName);
     // add foreground
-    var children = this.tileChildren(name);
+    var children = this.tileChildren(tileName);
     this.tileLoader(children, true);
     // add backgound
     for (neighbourCall = 0; neighbourCall < neighbourCalls.length; neighbourCall++) {
       this.tileLoader([ neighbourCalls[neighbourCall] ], false);
     }
     // remove processed background
-    this.backgroundGroup.remove(this.backgroundGroup.getObjectByName(name.zoom + '_' + name.tileRow + '_' + name.tileCol));
+    this.backgroundGroup.remove(this.backgroundGroup.getObjectByName(tileName.zoom + '_' + tileName.tileRow + '_' + tileName.tileCol));
   };
 
-  ns.ThreeDMap.prototype.tileChildren = function (name) {
+  ns.ThreeDMap.prototype.tileChildren = function (tileName) {
     var tr, tc;
     var WMTSCalls = [];
-    var tileCol = name.tileCol * 2;
-    var tileRow = name.tileRow * 2;
+    var tileCol = tileName.tileCol * 2;
+    var tileRow = tileName.tileRow * 2;
     var tileColMin = tileCol;
     var tileRowMin = tileRow;
     var tileColMax = tileCol + 1;
@@ -293,19 +293,19 @@ var wxs3 = wxs3 || {};
     for (tc = tileColMin; tc <= tileColMax; tc++)
       for (tr = tileRowMin; tr <= tileRowMax; tr++)
         //if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) ==-1) {
-        if (this.foregroundGroup.getObjectByName(name.zoom + '_' + tr + '_' + tc) == undefined) {
+        if (typeof this.foregroundGroup.getObjectByName(tileName.zoom + '_' + tr + '_' + tc) === "undefined") {
           // Add tile to index over loaded tiles
-          this.foregroundTiles.push((name.zoom + 1) + '_' + tr + '_' + tc);
+          this.foregroundTiles.push((tileName.zoom + 1) + '_' + tr + '_' + tc);
           WMTSCalls.push(this.singleTileFetcher(tc, tr, this.foregroundMatrix));
         }
     return WMTSCalls;
   };
 
-  ns.ThreeDMap.prototype.backGroundTileNeighbours = function (name) {
+  ns.ThreeDMap.prototype.backGroundTileNeighbours = function (tileName) {
     var tr, tc;
     var WMTSCalls = [];
-    var tileCol = name.tileCol;
-    var tileRow = name.tileRow;
+    var tileCol = tileName.tileCol;
+    var tileRow = tileName.tileRow;
     var tileColMin = tileCol - 1;
     var tileRowMin = tileRow - 1;
     var tileColMax = tileCol + 1;
@@ -313,8 +313,8 @@ var wxs3 = wxs3 || {};
     // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
     for (tc = tileColMin; tc <= tileColMax; tc++)
       for (tr = tileRowMin; tr <= tileRowMax; tr++)
-        if (this.backgroundTiles.indexOf(name.zoom + '_' + tr + '_' + tc) == -1) {
-          this.backgroundTiles.push(name.zoom + '_' + tr + '_' + tc);
+        if (this.backgroundTiles.indexOf(tileName.zoom + '_' + tr + '_' + tc) == -1) {
+          this.backgroundTiles.push(tileName.zoom + '_' + tr + '_' + tc);
           WMTSCalls.push(this.singleTileFetcher(tc, tr, this.backgroundMatrix));
         }
     return WMTSCalls;
