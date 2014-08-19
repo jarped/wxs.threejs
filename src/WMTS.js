@@ -56,10 +56,14 @@ var wxs3 = wxs3 || {};
     );
     try {
       thisNode = iterator.iterateNext();
+      // Populate tileMatrixSet
       while (thisNode) {
-        // Populate tileMatrixSet
+        // Hack for firefox/chrome cross-compatibility
+        var identifierTagName='Identifier';
+        if (thisNode.getElementsByTagName(identifierTagName).length === 0)
+            identifierTagName='ows:Identifier'
         tileMatrixSet.push({
-          Identifier: thisNode.getElementsByTagName('ows:Identifier')[0].textContent,
+          Identifier: thisNode.getElementsByTagName(identifierTagName)[0].textContent,
           ScaleDenominator: parseFloat(thisNode.getElementsByTagName('ScaleDenominator')[0].textContent),
           TopLeftCorner: {
             minx: parseFloat(thisNode.getElementsByTagName('TopLeftCorner')[0].textContent.split(' ')[0]),
@@ -74,7 +78,7 @@ var wxs3 = wxs3 || {};
           TileSpanX: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileWidth')[0].textContent),
           // scaledenominator*pixelsize*tileheight
           TileSpanY: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileHeight')[0].textContent),
-          Zoom: parseInt(thisNode.getElementsByTagName('ows:Identifier')[0].textContent.split(':').slice(-1)[0])
+          Zoom: parseInt(thisNode.getElementsByTagName(identifierTagName)[0].textContent.split(':').slice(-1)[0])
         });
         thisNode = iterator.iterateNext();
       }

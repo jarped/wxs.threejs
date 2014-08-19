@@ -13,6 +13,7 @@ var wxs3 = wxs3 || {};
 
 
   ns.WCS.prototype.wcsFetcher = function (WMTSCall) {
+    this.WMTSCall=WMTSCall;
     var demTileRequest = new XMLHttpRequest();
     var that = this;
     demTileRequest.open('GET', WMTSCall.url.wcs, true);
@@ -20,15 +21,26 @@ var wxs3 = wxs3 || {};
     demTileRequest.onreadystatechange = function () {
       var tiffArray,tiffParser;
       if (this.readyState === 4) {
+        try{
         tiffParser = new TIFFParser();
         tiffArray = tiffParser.parseTIFF(this.response);
         that.updateGeometry(tiffArray[0], that.geometry);
+    }
+    catch(e){
+        console.log('ERROR: ' + e);
+        console.log('Retrying');
+        that.wcsFetcher(that.WMTSCall);
       }
+    }
     };
     demTileRequest.send();
   };
 
   ns.WCS.prototype.updateGeometry = function (xyzlines, geometry) {
+    if (xyzlines.length!=geometry.vertices.length){
+        console.log('mismatch between wcs and geometry: ');
+        console.log(xyzlines.length + ' ' + geometry.vertices.length);
+    }
     var i, length = geometry.vertices.length;
     for (i = 0; i < length; i = i + 1) {
       // Back to just manipulating height for now.
