@@ -15,8 +15,8 @@ var wxs3 = wxs3 || {};
   ns.WCS.prototype.wcsFetcher = function (WMTSCall) {
     var demTileRequest = new XMLHttpRequest();
     var that = this;
-    demTileRequest.responseType = 'arraybuffer';
     demTileRequest.open('GET', WMTSCall.url.wcs, true);
+    demTileRequest.responseType = 'arraybuffer';
     demTileRequest.onreadystatechange = function () {
       var tiffArray,tiffParser;
       if (this.readyState === 4) {

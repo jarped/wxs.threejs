@@ -59,7 +59,7 @@ var wxs3 = wxs3 || {};
       while (thisNode) {
         // Populate tileMatrixSet
         tileMatrixSet.push({
-          Identifier: thisNode.getElementsByTagName('Identifier')[0].textContent,
+          Identifier: thisNode.getElementsByTagName('ows:Identifier')[0].textContent,
           ScaleDenominator: parseFloat(thisNode.getElementsByTagName('ScaleDenominator')[0].textContent),
           TopLeftCorner: {
             minx: parseFloat(thisNode.getElementsByTagName('TopLeftCorner')[0].textContent.split(' ')[0]),
@@ -74,7 +74,7 @@ var wxs3 = wxs3 || {};
           TileSpanX: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileWidth')[0].textContent),
           // scaledenominator*pixelsize*tileheight
           TileSpanY: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileHeight')[0].textContent),
-          Zoom: parseInt(thisNode.getElementsByTagName('Identifier')[0].textContent.split(':').slice(-1)[0])
+          Zoom: parseInt(thisNode.getElementsByTagName('ows:Identifier')[0].textContent.split(':').slice(-1)[0])
         });
         thisNode = iterator.iterateNext();
       }
