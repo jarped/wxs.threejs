@@ -9,6 +9,8 @@ var wxs3 = wxs3 || {};
     this.wcsWidth = wcsWidth;
     this.wcsHeight = wcsHeight;
     this.geometry = new THREE.PlaneGeometry(tileSpanX, tileSpanY, wcsWidth, wcsHeight);
+    this.tries=0;
+    this.maxTries=3;
   };
 
 
@@ -27,9 +29,19 @@ var wxs3 = wxs3 || {};
         that.updateGeometry(tiffArray[0], that.geometry);
     }
     catch(e){
-        console.log('ERROR: ' + e);
-        console.log('Retrying');
-        that.wcsFetcher(that.WMTSCall);
+        console.log('ERROR: WCS-call for ' + WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + WMTSCall.tileCol + ' failed.');
+        if (that.tries<that.maxTries){
+          that.tries+=1;
+          console.log('Retrying ' + that.tries + ' of ' + that.maxTries);
+          // This doesn't work as I expected.
+          setTimeout(that.wcsFetcher(that.WMTSCall) ,10000);
+      }
+        else
+        {
+          console.log('ERROR: Failed '+ that.maxTries +' times on ' + WMTSCall.url.wcs);
+          console.log('Output from WCS: ');
+          console.log(String.fromCharCode.apply(null, new Uint8Array(this.response)));
+        }
       }
     }
     };

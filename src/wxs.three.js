@@ -383,6 +383,7 @@ var wxs3 = wxs3 || {};
       this.backgroundGroup.add(tile);
     }
   };
+
   ns.ThreeDMap.prototype.neighbourTest = function (WMTSCall) {
     var name = WMTSCall.zoom + '_' + (WMTSCall.tileRow) + '_' + WMTSCall.tileCol;
     var neighbourTop = WMTSCall.zoom + '_' + (WMTSCall.tileRow - 1) + '_' + WMTSCall.tileCol;
@@ -404,18 +405,20 @@ var wxs3 = wxs3 || {};
     this.geometryTester(name, neighbourBottom, 'bottom');
 
   };
+
   ns.ThreeDMap.prototype.geometryTester = function (name, neighbourName, placement) {
     var neighbour, tile;
     if (this.foregroundGroup.getObjectByName(neighbourName)) {
       tile = this.foregroundGroup.getObjectByName(name);
       neighbour = this.foregroundGroup.getObjectByName(neighbourName);
-      if (neighbour.geometry.loaded == true) {
+      if (neighbour.geometry.loaded == true && neighbour.scale.z >= 1) {
         if (tile.geometry.loaded == true) {
           this.geometryFixer(tile, neighbour, placement);
         }
       }
     }
   };
+
   ns.ThreeDMap.prototype.geometryFixer = function (tile, neighbour, placement) {
     var i, oppositeEdge;
     if (placement == 'left')
