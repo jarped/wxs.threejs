@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WMST</title>
+        <link type="text/css" href="http://openlayers.org/dev/theme/default/style.css" rel="stylesheet"/>
+        <style>
+            html,body {
+                height: 95%;
+                width: 99%:
+            }
+            #map {
+                width: 100%;
+                height: 100%;
+                border: 1px solid black;
+            }
+            .olControlLoadingPanel {
+                background-image:url(http://labs.kartverket.no/wp-content/uploads/2012/11/loader2.gif);
+                position: center;
+                width: 50%;
+                height: 50%;
+                background-position:center;
+                background-repeat:no-repeat;
+                display: none;
+            }       
+        </style>
+        <script src="http://openlayers.org/dev/OpenLayers.js"></script>
+        <script type="text/javascript">
+            // Initializing variables
+            var map, layer;
+            // Main function
+            function init(){
+                zoom=10;
+		        mapProj=new OpenLayers.Projection('EPSG:32633'); 
+				var mapBounds = new OpenLayers.Bounds(-2500000.0,3500000.0,3045984.0,9045984.0); 
+                var geoExtent = new OpenLayers.Bounds();
+                // Initialize map
+                map = new OpenLayers.Map('map',  { 
+                    controls: [
+                        new OpenLayers.Control.PanZoom(),
+                        new OpenLayers.Control.Navigation({zoomWheelEnabled: true}),
+                        new OpenLayers.Control.LayerSwitcher({'div':OpenLayers.Util.getElement('layerswitcher')}),
+                        new OpenLayers.Control.MousePosition({
+                            prefix: 'Coordinates: ',
+                            separator: ' | ',
+                            numDigits: 2,
+                            emptyString: 'Mouse outside of map'
+                        })
+                    ],
+                    wrapDateLine:false,
+                    maxExtent:mapBounds,
+                    projection: mapProj 
+                });
+                // Initialize layers   
+		       var matrixIds = new Array(18);
+		       for (var i=0; i<=18; ++i) {
+		         matrixIds[i] = new Object();
+		         matrixIds[i].identifier = mapProj + ":" + i;
+       			} 
+	  
+		       var topo2_wmts = new OpenLayers.Layer.WMTS({
+        		 name: "topo2",
+		         url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
+		         layer: "topo2",
+		         matrixSet: mapProj,
+		         matrixIds: matrixIds,
+		         format: "image/png",
+		         requestEncoding: "kvp",
+		         style: "default",
+		         visibility: 1, 
+		         transitionEffect: 'resize',
+		       });   
+
+			    map.addLayers([topo2_wmts]);
+	        	// Add layers to map and zoom to extents
+				map.setCenter(new OpenLayers.LonLat(165535,6834611),5);
+				map.zoomTo(10);
+            }
+        </script>
+    </head>
+    <body onload="init()">
+          <div id="map" class="smallmap"></div>
+    </body>
+</html>

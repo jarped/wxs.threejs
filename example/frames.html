@@ -1,0 +1,24 @@
+<html>
+    <script type="text/javascript" >
+      function doFunction()
+      {
+        var wxs = document.getElementById("3d");
+        var bbox=document.getElementById("client").contentWindow.map.getExtent();
+        wxs.src = "../wxs.three.html?BBOX="+bbox;
+        return false;
+        alert(check)
+      }
+    </script>
+  <body onLoad="doFunction">
+  <input style="background-color:lightgreen" id="clickMe" type="button" value="Make 3d-model" onclick="doFunction();" />
+  <br/>
+  <table>
+    <tr>
+    <iframe id="client" src="client.html" height="50%"  width="50%" title="" longdesc=""></iframe>
+   </tr>
+   <tr>
+    <iframe id="3d" width="50%" height="50%" title="" longdesc="" ></iframe>
+   </tr>
+  </table>
+  </body>
+ </html>
