@@ -8,6 +8,11 @@ Some old functionality is temporarily gone.
 Realtime consumption of wxs-services
 
 
+RawGit:
+
+http://rawgit.com/jarped/wxs.threejs/master/example/frames.html
+
+
 Additional information:
 
 http://labs.kartverket.no/wcs-i-threejs/
@@ -16,11 +21,6 @@ http://labs.kartverket.no/wcs-i-threejs/
 Example-calls to the WCS:
 
 http://labs.kartverket.no/wcs-i-quantum-gis/
-
-
-RawGit:
-
-http://rawgit.com/jarped/wxs.threejs/master/example/frames.html
 
 
 The following licenses apply:
