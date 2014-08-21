@@ -68,9 +68,22 @@
 		         style: "default",
 		         visibility: 1, 
 		         transitionEffect: 'resize',
-		       });   
+		       }); 
 
-			    map.addLayers([topo2_wmts]);
+               var terreng_wmts = new OpenLayers.Layer.WMTS({
+                 name: "terreng_norgeskart",
+                 url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
+                 layer: "terreng_norgeskart",
+                 matrixSet: mapProj,
+                 matrixIds: matrixIds,
+                 format: "image/png",
+                 requestEncoding: "kvp",
+                 style: "default",
+                 visibility: 1, 
+                 transitionEffect: 'resize',
+               });   
+
+			    map.addLayers([topo2_wmts, terreng_wmts]);
 	        	// Add layers to map and zoom to extents
 				map.setCenter(new OpenLayers.LonLat(165535,6834611),5);
 				map.zoomTo(10);

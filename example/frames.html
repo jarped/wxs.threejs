@@ -4,9 +4,8 @@
       {
         var wxs = document.getElementById("3d");
         var bbox=document.getElementById("client").contentWindow.map.getExtent();
-        wxs.src = "../wxs.three.html?BBOX="+bbox;
-        return false;
-        alert(check)
+        var layer=document.getElementById("client").contentWindow.map.baseLayer.name;
+        wxs.src = "../wxs.three.html?BBOX="+bbox + '&LAYER=' + layer;
       }
     </script>
   <body onLoad="doFunction">

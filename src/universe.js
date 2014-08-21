@@ -65,8 +65,10 @@ Dim = {
   crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
   coverage: getQueryVariable("COVERAGE") || 'all_50m',
   wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
-  wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
-  wmtsUrl: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
+  wmtsLayer: getQueryVariable("LAYER") || 'topo2',
+  wmtsUrl: getQueryVariable("WMTS") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
+  wmscUrl:  getQueryVariable("WMSC") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_cache',
+  wcsUrl: getQueryVariable("WCS")||'http://wms.geonorge.no/skwms1/wcs.dtm',
   wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
   wmsFormatMode: "",
   zMult: getQueryVariable("ZMULT") || 1

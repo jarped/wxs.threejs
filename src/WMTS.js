@@ -3,9 +3,10 @@ var wxs3 = wxs3 || {};
 (function (ns) {
   'use strict';
 
-  ns.WMTS = function (capabilitiesURL, epsg) {
+  ns.WMTS = function (capabilitiesURL, epsg, layer) {
     this.tileMatrixSet = {};
     this.epsg = epsg;
+    this.layer= layer;
     this.capabilitiesURL = capabilitiesURL;
   };
 
@@ -44,7 +45,7 @@ var wxs3 = wxs3 || {};
     };
 
     // TODO: Find layers from capabilities and check if crs is supported by layer. Example xpath:
-    //var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='topo2']]",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
+    //var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='" + this.layer + "']]",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
 
     // Find tilematrixset:
     var iterator = capabilitiesXml.evaluate(
