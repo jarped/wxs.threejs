@@ -81,9 +81,35 @@
                  style: "default",
                  visibility: 1, 
                  transitionEffect: 'resize',
-               });   
+               });  
 
-			    map.addLayers([topo2_wmts, terreng_wmts]);
+               var sjo_wmts = new OpenLayers.Layer.WMTS({
+                 name: "sjo_hovedkart2",
+                 url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
+                 layer: "sjo_hovedkart2",
+                 matrixSet: mapProj,
+                 matrixIds: matrixIds,
+                 format: "image/png",
+                 requestEncoding: "kvp",
+                 style: "default",
+                 visibility: 1, 
+                 transitionEffect: 'resize',
+               });   
+                var toporaster2_wmts = new OpenLayers.Layer.WMTS({
+                 name: "toporaster2",
+                 url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
+                 layer: "toporaster2",
+                 matrixSet: mapProj,
+                 matrixIds: matrixIds,
+                 format: "image/png",
+                 requestEncoding: "kvp",
+                 style: "default",
+                 visibility: 1, 
+                 transitionEffect: 'resize',
+               }); 
+ 
+
+			    map.addLayers([topo2_wmts, terreng_wmts, sjo_wmts, toporaster2_wmts]);
 	        	// Add layers to map and zoom to extents
 				map.setCenter(new OpenLayers.LonLat(165535,6834611),5);
 				map.zoomTo(10);
