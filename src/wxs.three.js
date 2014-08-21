@@ -161,7 +161,7 @@ var wxs3 = wxs3 || {};
 
     // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
     // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-    spanDivisor = 1;
+    spanDivisor = 3;
     for (tileMatrix = 0; tileMatrix < tileMatrixCount; tileMatrix++) {
       if (querySpanMinDim == 'x') {
         if (tileMatrixSet[tileMatrix].TileSpanX < querySpanMin / spanDivisor) {

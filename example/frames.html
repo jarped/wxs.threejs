@@ -1,23 +1,29 @@
 <html>
-    <script type="text/javascript" >
-      function doFunction()
-      {
-        var wxs = document.getElementById("3d");
-        var bbox=document.getElementById("client").contentWindow.map.getExtent();
-        var layer=document.getElementById("client").contentWindow.map.baseLayer.name;
-        wxs.src = "../wxs.three.html?BBOX="+bbox + '&LAYER=' + layer;
-      }
-    </script>
-  <body onLoad="doFunction">
-  <input style="background-color:lightgreen" id="clickMe" type="button" value="Make 3d-model" onclick="doFunction();" />
-  <br/>
-  <table>
-    <tr>
-    <iframe id="client" src="client.html" height="45%"  width="50%" title="" longdesc=""></iframe>
-   </tr>
-   <tr>
-    <iframe id="3d" width="50%" height="45%" title="" longdesc="" ></iframe>
-   </tr>
-  </table>
+  <script type="text/javascript" >
+    function doFunction()
+    {
+      var wxs = document.getElementById("3d");
+      var bbox=document.getElementById("client").contentWindow.map.getExtent();
+      var layer=document.getElementById("client").contentWindow.map.baseLayer.name;
+      wxs.src = "../wxs.three.html?BBOX="+bbox + '&LAYER=' + layer;
+      var url=document.getElementById("url");
+      url.innerText=document.baseURI.replace('example/frames.html','') + "wxs.three.html?BBOX="+bbox + '&LAYER=' + layer;
+      url.href= document.baseURI.replace('frames.html','') + "../wxs.three.html?BBOX="+bbox + '&LAYER=' + layer;
+    }
+  </script>
+  <body>
+    <h1>WXS.THREE Openlayers example</h1>
+    <table style="width:100%;height:90%">
+      <td>
+        <iframe id="client" src="client.html" height="100%"  width="100%"></iframe>
+      </td>
+      <td>
+        <iframe id="3d" height="100%" width="100%" ></iframe>
+      </td>
+      <td>
+        <input ="clickMe" type="button" value="Make 3D-model" onclick="doFunction();" />
+      </td>
+    </table>
+    <a id="url" target="_blank"/>
   </body>
  </html>

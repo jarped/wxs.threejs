@@ -26,13 +26,13 @@ var wxs3 = wxs3 || {};
     client.send();
   };
 
+  // Hacky namespace-resolver to read default namespace. suggestions welcome
   ns.WMTS.prototype.parseCapabilities = function (capabilitiesXml) {
     var thisNode;
     var tileMatrixSet = [];
     // *magic* number for meters-based projections.
     // TODO: Figure out correct number for geographic projections
     var pixelsize = 0.00028;
-    // Hacky namespace-resolver to read default namespace. suggestions welcome
     var resolver = {
       lookupNamespaceURI: function lookup(aPrefix) {
         if (aPrefix == "default") {
