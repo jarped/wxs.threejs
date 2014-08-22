@@ -62,7 +62,7 @@ Dim = {
     }
     return this;
   },
-  crs: getQueryVariable("CRS") || getQueryVariable("SRS") || 'EPSG:32633',
+  crs: getQueryVariable("CRS") || getQueryVariable("SRS") || '32633',
   coverage: getQueryVariable("COVERAGE") || 'all_50m',
   wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
   wmtsLayer: getQueryVariable("LAYER") || 'topo2',

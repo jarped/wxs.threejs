@@ -107,9 +107,22 @@
                  visibility: 1, 
                  transitionEffect: 'resize',
                }); 
+
+                var europa_wmts = new OpenLayers.Layer.WMTS({
+                 name: "europa",
+                 url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
+                 layer: "europa",
+                 matrixSet: mapProj,
+                 matrixIds: matrixIds,
+                 format: "image/png",
+                 requestEncoding: "kvp",
+                 style: "default",
+                 visibility: 1, 
+                 transitionEffect: 'resize',
+               }); 
  
 
-			    map.addLayers([topo2_wmts, terreng_wmts, sjo_wmts, toporaster2_wmts]);
+			    map.addLayers([topo2_wmts, terreng_wmts, sjo_wmts, toporaster2_wmts, europa_wmts]);
 	        	// Add layers to map and zoom to extents
 				map.setCenter(new OpenLayers.LonLat(165535,6834611),5);
 				map.zoomTo(10);

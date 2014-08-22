@@ -117,6 +117,7 @@ var wxs3 = wxs3 || {};
         this.foregroundGroup.children[i].scale.z += 0.02;
       }
       else if (this.foregroundGroup.children[i].scale.z >= 1) {
+        this.foregroundGroup.children[i].material.wireframe=false;
         if (this.foregroundGroup.children[i].geometry.processed['all'] == false) {
           this.neighbourTest(this.foregroundGroup.children[i].WMTSCall);
         }
@@ -130,7 +131,7 @@ var wxs3 = wxs3 || {};
 
   ns.ThreeDMap.prototype.generateTiles = function () {
     var capabilitiesURL = this.dim.wmtsUrl+'?Version=1.0.0&service=WMTS&request=getcapabilities';
-    var WMTSCapabilities = new ns.WMTS(capabilitiesURL, 32633, this.dim.wmtsLayer);
+    var WMTSCapabilities = new ns.WMTS(capabilitiesURL, this.dim.crs, this.dim.wmtsLayer);
     var that = this;
     WMTSCapabilities.fetchCapabilities(function (tileMatrixSet) {
       that.bbox2tiles(tileMatrixSet);
@@ -237,12 +238,12 @@ var wxs3 = wxs3 || {};
       // Setting these for easy debugging
       // TODO: define parameters here for reuse later on
       url: {
-        cache_WMTS: this.dim.wmtsUrl+'?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Style=default&Format=image/png&Layer='+ this.dim.wmtsLayer+'&TileMatrixSet=EPSG:' + activeMatrix.Identifier.split(':')[1] + '&TileMatrix=' + activeMatrix.Identifier + '&TileRow=' + tileRow + '&TileCol=' + tileCol,
+        cache_WMTS: this.dim.wmtsUrl+'?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&Style=default&Format=image/png&Layer='+ this.dim.wmtsLayer+'&TileMatrixSet=' + activeMatrix.TileMatrixSetIdentifier + '&TileMatrix=' + activeMatrix.Identifier + '&TileRow=' + tileRow + '&TileCol=' + tileCol,
         cache_wms: this.dim.wmscUrl +'REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&Layer=topo2&Style=default&Format=image/png&width=256&height=256&crs=EPSG:' + activeMatrix.Identifier.split(':')[1] + '&BBOX=' + wmsBounds.join(','),
         wms: this.dim.wmsUrl + '?REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&Layers=topo2_wms&Style=default&Format=image/png&WIDTH=256&HEIGHT=256&SRS=EPSG:' + activeMatrix.Identifier.split(':')[1] + '&BBOX=' + wmsBounds.join(','),
         //wcs 1.1.0 NOT WORKING with XYZ - needs to drop xml-part to use tiff-js?
         //wcs: 'http://wcs.geonorge.no/skwms1/wcs.dtm?SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&FORMAT=geotiff&IDENTIFIER=all_50m&BOUNDINGBOX='+ wcsBounds.join(',')  +',urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridBaseCRS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridCS=urn:ogc:def:crs:EPSG::'+activeMatrix.Identifier.split(':')[1] + '&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=' +wmsBounds[0] +',' +wmsBounds[1] +'&GridOffsets='+grid2rasterUnitsX +',' +grid2rasterUnitsY + '&RangeSubset=50m:average' //[bands[1]]'
-        wcs: this.dim.wcsUrl+'?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=geotiff&WIDTH=' + parseInt(dim.demWidth) + '&HEIGHT=' + parseInt(dim.demWidth) + '&COVERAGE=all_50m&crs=EPSG:' + activeMatrix.Identifier.split(':')[1] + '&BBOX=' + wcsBounds.join(',') // + '&INTERPOLATION=BILINEAR' //+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1] //+ '&RangeSubset=50m:average[bands[1]]' +'&RESX='+grid2rasterUnitsX+'&RESY='+grid2rasterUnitsY
+        wcs: this.dim.wcsUrl+'?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=geotiff&WIDTH=' + parseInt(dim.demWidth) + '&HEIGHT=' + parseInt(dim.demWidth) + '&COVERAGE=' + dim.coverage + '&crs=EPSG:' + this.dim.crs + '&BBOX=' + wcsBounds.join(',') // + '&INTERPOLATION=BILINEAR' //+'&RESPONSE_CRS=EPSG:'+activeMatrix.Identifier.split(':')[1] //+ '&RangeSubset=50m:average[bands[1]]' +'&RESX='+grid2rasterUnitsX+'&RESY='+grid2rasterUnitsY
       },
       bounds: {
         minx: wmsBounds[0],
@@ -346,9 +347,11 @@ var wxs3 = wxs3 || {};
               WMTSCalls[i].url.cache_WMTS,
               new THREE.UVMapping()
             ),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide//,
+            //wireframe: true
           }
         );
+        //material.map.image.hidden=true;
       }
       else {
         geometry = new THREE.PlaneGeometry(WMTSCalls[i].tileSpanX, WMTSCalls[i].tileSpanY);

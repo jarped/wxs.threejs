@@ -26,13 +26,15 @@ var wxs3 = wxs3 || {};
     client.send();
   };
 
-  // Hacky namespace-resolver to read default namespace. suggestions welcome
+
   ns.WMTS.prototype.parseCapabilities = function (capabilitiesXml) {
     var thisNode;
     var tileMatrixSet = [];
     // *magic* number for meters-based projections.
     // TODO: Figure out correct number for geographic projections
     var pixelsize = 0.00028;
+
+    // Hacky namespace-resolver to read default namespace. suggestions welcome   
     var resolver = {
       lookupNamespaceURI: function lookup(aPrefix) {
         if (aPrefix == "default") {
@@ -44,10 +46,48 @@ var wxs3 = wxs3 || {};
       }
     };
 
+    var tileMatrixSetLinks=[];
+
     // TODO: Find layers from capabilities and check if crs is supported by layer. Example xpath:
     //var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='" + this.layer + "']]",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
+    var iterator=capabilitiesXml.evaluate("//default:Capabilities/default:Contents/default:Layer[child::ows:Identifier[text()='" + this.layer + "']]/default:TileMatrixSetLink/default:TileMatrixSet",capabilitiesXml, resolver,XPathResult.ANY_TYPE, null);
+    try {
+      thisNode = iterator.iterateNext();
+      while (thisNode) {
+        tileMatrixSetLinks.push(thisNode.textContent);
+        thisNode = iterator.iterateNext();
+      }
+
+    }
+    catch (e) {
+      console.log('Error: An error occured during iteration ' + e);
+    }
+
+
+    var iterator = capabilitiesXml.evaluate(
+        "//default:Capabilities/default:Contents/default:TileMatrixSet[child::ows:SupportedCRS[text()='urn:ogc:def:crs:EPSG::" + this.epsg + "']]/ows:Identifier",
+      capabilitiesXml,
+      resolver,
+      XPathResult.ANY_TYPE,
+      null
+    );
+
+    var tileMatrixSetIdentifier=null;
+
+    try {
+      thisNode = iterator.iterateNext();
+      while (thisNode) {
+        tileMatrixSetIdentifier=thisNode.textContent;
+        thisNode = iterator.iterateNext();
+      }
+
+    }
+    catch (e) {
+      console.log('Error: An error occured during iteration ' + e);
+    }
 
     // Find tilematrixset:
+    
     var iterator = capabilitiesXml.evaluate(
         "//default:Capabilities/default:Contents/default:TileMatrixSet[child::ows:SupportedCRS[text()='urn:ogc:def:crs:EPSG::" + this.epsg + "']]/default:TileMatrix",
       capabilitiesXml,
@@ -55,6 +95,16 @@ var wxs3 = wxs3 || {};
       XPathResult.ANY_TYPE,
       null
     );
+
+/*
+    var iterator = capabilitiesXml.evaluate(
+        "//default:Capabilities/default:Contents/default:TileMatrixSet[child::ows:Identifier[text()='" + tileMatrixSetLink + "']]/default:TileMatrix",
+      capabilitiesXml,
+      resolver,
+      XPathResult.ANY_TYPE,
+      null
+    );
+*/
     try {
       thisNode = iterator.iterateNext();
       // Populate tileMatrixSet
@@ -64,6 +114,7 @@ var wxs3 = wxs3 || {};
         if (thisNode.getElementsByTagName(identifierTagName).length === 0)
             identifierTagName='ows:Identifier'
         tileMatrixSet.push({
+          TileMatrixSetIdentifier: tileMatrixSetIdentifier,
           Identifier: thisNode.getElementsByTagName(identifierTagName)[0].textContent,
           ScaleDenominator: parseFloat(thisNode.getElementsByTagName('ScaleDenominator')[0].textContent),
           TopLeftCorner: {
@@ -79,7 +130,7 @@ var wxs3 = wxs3 || {};
           TileSpanX: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileWidth')[0].textContent),
           // scaledenominator*pixelsize*tileheight
           TileSpanY: parseFloat((thisNode.getElementsByTagName('ScaleDenominator')[0].textContent * pixelsize) * thisNode.getElementsByTagName('TileHeight')[0].textContent),
-          Zoom: parseInt(thisNode.getElementsByTagName(identifierTagName)[0].textContent.split(':').slice(-1)[0])
+          Zoom: parseInt(thisNode.getElementsByTagName(identifierTagName)[0].textContent.split(':').slice(-1)[0]),
         });
         thisNode = iterator.iterateNext();
       }
