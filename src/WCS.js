@@ -10,7 +10,7 @@ var wxs3 = wxs3 || {};
     this.wcsHeight = wcsHeight;
     this.geometry = new THREE.PlaneGeometry(tileSpanX, tileSpanY, wcsWidth, wcsHeight);
     this.tries=0;
-    this.maxTries=3;
+    this.maxTries=5;
     this.time=Date.now();
   };
 
@@ -36,7 +36,7 @@ var wxs3 = wxs3 || {};
           var spentTime=Date.now()-that.time;
           that.time=Date.now();
           console.log(spentTime + ' ERROR: Retrying ' + that.tries + ' of ' + that.maxTries + ' for ' + WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + WMTSCall.tileCol);
-          window.setTimeout(function(){that.wcsFetcher( that.WMTSCall)}, 1000);
+          window.setTimeout(function(){that.wcsFetcher( that.WMTSCall)}, 1500);
       }
         else
         {
