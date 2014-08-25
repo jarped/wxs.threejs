@@ -36,8 +36,7 @@ var wxs3 = wxs3 || {};
           var spentTime=Date.now()-that.time;
           that.time=Date.now();
           console.log(spentTime + ' ERROR: Retrying ' + that.tries + ' of ' + that.maxTries + ' for ' + WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + WMTSCall.tileCol);
-          // This doesn't work as I expected.
-          window.setTimeout(that.wcsFetcher(that.WMTSCall), 500);
+          window.setTimeout(function(){that.wcsFetcher( that.WMTSCall)}, 1000);
       }
         else
         {
