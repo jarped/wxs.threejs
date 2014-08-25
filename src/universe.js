@@ -63,7 +63,7 @@ Dim = {
     return this;
   },
   crs: getQueryVariable("CRS") || getQueryVariable("SRS") || '32633',
-  coverage: getQueryVariable("COVERAGE") || 'all_50m',
+  coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
   wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
   wmtsLayer: getQueryVariable("LAYER") || 'topo2',
   wmtsUrl: getQueryVariable("WMTS") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
