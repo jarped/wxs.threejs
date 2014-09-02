@@ -26,7 +26,11 @@ var wxs3 = wxs3 || {};
       top: [],
       left: [],
       right: [],
-      bottom: []
+      bottom: [],
+      topLeft: [],
+      bottomLeft: [],
+      topRight: [],
+      bottomRight: []
     };
     length = dim.demWidth * dim.demHeight;
     for (i = 0; i < length; i++) {
@@ -51,6 +55,14 @@ var wxs3 = wxs3 || {};
       else if (i % this.dim.demWidth == 0) this.edges.left.push(i);
       else if ((i + 1) % this.dim.demWidth == 0) this.edges.right.push(i);
     }
+
+    this.edges.topLeft=this.edges.top[0];
+    this.edges.topRight=this.edges.right[0];
+    this.edges.bottomLeft=this.edges.bottom[0];
+    this.edges.bottomRight=this.edges.bottom[this.dim.demWidth-1];
+
+
+
     this.dim.wmsLayers = layers;
     this.createRenderer();
     this.createScene();
@@ -162,7 +174,7 @@ var wxs3 = wxs3 || {};
 
     // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
     // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-    spanDivisor = 3;
+    spanDivisor = 2;
     for (tileMatrix = 0; tileMatrix < tileMatrixCount; tileMatrix++) {
       if (querySpanMinDim == 'x') {
         if (tileMatrixSet[tileMatrix].TileSpanX < querySpanMin / spanDivisor) {
@@ -339,6 +351,11 @@ var wxs3 = wxs3 || {};
           right: false,
           top: false,
           bottom: false,
+          topLeft: false,
+          topRight: false,
+          bottomLeft: false,
+          bottomRight: false,
+          allSides: false,
           all: false
         };
         material = new THREE.MeshBasicMaterial(
@@ -389,61 +406,94 @@ var wxs3 = wxs3 || {};
 
   ns.ThreeDMap.prototype.neighbourTest = function (WMTSCall) {
     var name = WMTSCall.zoom + '_' + (WMTSCall.tileRow) + '_' + WMTSCall.tileCol;
-    var neighbourTop = WMTSCall.zoom + '_' + (WMTSCall.tileRow - 1) + '_' + WMTSCall.tileCol;
-    var neighbourBottom = WMTSCall.zoom + '_' + (WMTSCall.tileRow + 1) + '_' + WMTSCall.tileCol;
-    var neighbourLeft = WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + (WMTSCall.tileCol - 1);
-    var neighbourRight = WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + (WMTSCall.tileCol + 1);
+    var neighbours={
+      top: WMTSCall.zoom + '_' + (WMTSCall.tileRow - 1) + '_' + WMTSCall.tileCol,
+      bottom: WMTSCall.zoom + '_' + (WMTSCall.tileRow + 1) + '_' + WMTSCall.tileCol,
+      left: WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + (WMTSCall.tileCol - 1),
+      right: WMTSCall.zoom + '_' + WMTSCall.tileRow + '_' + (WMTSCall.tileCol + 1),
+      topLeft: WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+(WMTSCall.tileCol -1),
+      topRight: WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+ (WMTSCall.tileCol +1),
+      bottomLeft: WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol -1),
+      bottomRight: WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol +1)
+   }
+     
+    var tile = this.foregroundGroup.getObjectByName(name);
+    if(!tile.geometry.processed['allSides']){
+      if (!tile.geometry.processed['top']){
+        this.geometryTester(tile, neighbours['top'], 'top');
+      }
+      if (!tile.geometry.processed['bottom']){
+        this.geometryTester(tile, neighbours['bottom'], 'bottom');
+      }
+      if (!tile.geometry.processed['left']){
+        this.geometryTester(tile, neighbours['left'], 'left');
+      }
+      if (!tile.geometry.processed['right']){
+        this.geometryTester(tile, neighbours['right'], 'right');
+      }
+    }
+    else
+    {
+      if (!tile.geometry.processed['topLeft']){
+        this.geometryTester(tile, neighbours['topLeft'], 'topLeft');
+      }
+      if (!tile.geometry.processed['bottomLeft']){
+        this.geometryTester(tile, neighbours['bottomLeft'], 'bottomLeft');
+      }
+      if (!tile.geometry.processed['bottomLeft']){
+        this.geometryTester(tile, neighbours['bottomLeft'], 'bottomLeft');
+      }
+      if (!tile.geometry.processed['topRight']){
+        this.geometryTester(tile, neighbours['topRight'], 'topRight');
+      }
 
-    // TODO: These need to be tested and averaged as well
-    /*
-     var neighbourTopLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+(WMTSCall.tileCol -1);
-     var neighbourTopRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow -1) +'_'+ (WMTSCall.tileCol; +1)
-     var neighbourBottomLeft=WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol -1);
-     var neighbourBottomRight=WMTSCall.zoom+'_'+ (WMTSCall.tileRow +1) +'_'+(WMTSCall.tileCol +1);
-     */
-
-    this.geometryTester(name, neighbourLeft, 'left');
-    this.geometryTester(name, neighbourRight, 'right');
-    this.geometryTester(name, neighbourTop, 'top');
-    this.geometryTester(name, neighbourBottom, 'bottom');
-
+    }
   };
 
-  ns.ThreeDMap.prototype.geometryTester = function (name, neighbourName, placement) {
-    var neighbour, tile;
+  ns.ThreeDMap.prototype.geometryTester = function (tile, neighbourName, placement) {
+    var neighbour; //, tile;
     if (this.foregroundGroup.getObjectByName(neighbourName)) {
-      tile = this.foregroundGroup.getObjectByName(name);
       neighbour = this.foregroundGroup.getObjectByName(neighbourName);
       if (neighbour.geometry.loaded == true && neighbour.scale.z >= 1) {
         if (tile.geometry.loaded == true) {
           this.geometryFixer(tile, neighbour, placement);
         }
       }
+      
     }
   };
 
   ns.ThreeDMap.prototype.geometryFixer = function (tile, neighbour, placement) {
     var i, oppositeEdge;
-    if (placement == 'left')
-      oppositeEdge = 'right';
-    else if (placement == 'right')
-      oppositeEdge = 'left';
-    else if (placement == 'top')
-      oppositeEdge = 'bottom';
-    else if (placement == 'bottom')
-      oppositeEdge = 'top';
+    // Edges
+    oppositeEdge ={
+      top: 'bottom',
+      bottom: 'top',
+      left: 'right',
+      right: 'left',
+      topLeft: 'bottomRight',
+      bottomRight: 'topLeft',
+      topRight: 'bottomLeft',
+      bottomLeft: 'topRight'
+    }
 
     for (i = 0; i < this.edges[placement].length; i++) {
-      tile.geometry.vertices[this.edges[placement][i]].z = (tile.geometry.vertices[this.edges[placement][i]].z + neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z) / 2;
-      neighbour.geometry.vertices[this.edges[oppositeEdge][i]].z = tile.geometry.vertices[this.edges[placement][i]].z;
+      tile.geometry.vertices[this.edges[placement][i]].z = (tile.geometry.vertices[this.edges[placement][i]].z + neighbour.geometry.vertices[this.edges[oppositeEdge[placement]][i]].z) / 2;
+      neighbour.geometry.vertices[this.edges[oppositeEdge[placement]][i]].z = tile.geometry.vertices[this.edges[placement][i]].z;
     }
     tile.geometry.verticesNeedUpdate = true;
     neighbour.geometry.verticesNeedUpdate = true;
     tile.geometry.processed[placement] = true;
-    neighbour.geometry.processed[oppositeEdge] = true;
-    if (tile.geometry.processed['top'] == tile.geometry.processed['bottom'] == tile.geometry.processed['left'] == tile.geometry.processed['right'])
-      tile.geometry.processed['all'] = true;
-    if (neighbour.geometry.processed['top'] == neighbour.geometry.processed['bottom'] == neighbour.geometry.processed['left'] == neighbour.geometry.processed['right'])
-      neighbour.geometry.processed['all'] = true;
+    neighbour.geometry.processed[oppositeEdge[placement]] = true;
+    if (tile.geometry.processed['top'] & tile.geometry.processed['bottom'] & tile.geometry.processed['left'] & tile.geometry.processed['right'] ){
+      tile.geometry.processed['allSides'] = true;
+      if ( tile.geometry.processed['topLeft'] & tile.geometry.processed['bottomLeft'] & tile.geometry.processed['bottomRight'] & tile.geometry.processed['topRight'] )
+        tile.geometry.processed['all'] = true;
+    }
+    if (neighbour.geometry.processed['top'] & neighbour.geometry.processed['bottom'] & neighbour.geometry.processed['left'] & neighbour.geometry.processed['right'] ){
+      neighbour.geometry.processed['allSides'] = true;
+      if (neighbour.geometry.processed['topLeft'] & neighbour.geometry.processed['bottomLeft'] & neighbour.geometry.processed['bottomRight'] & neighbour.geometry.processed['topRight'] )
+        neighbour.geometry.processed['all'] = true;
+    }
   }
 }(wxs3));
