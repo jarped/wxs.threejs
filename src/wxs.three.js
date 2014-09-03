@@ -17,11 +17,11 @@ var wxs3 = wxs3 || {};
     this.foregroundTilesIndex = [];
 
     // Setting demWidth and demHeight to some fraction of 256
+    // TODO: Figure out why tiff-js won't allow arrays longer than 2048
     dim.demWidth = 32;
     dim.demHeight = dim.demWidth;
 
-    // Lets make some indexes with vertice-positions corresponding to edges.
-    // TODO: make corner-indexes
+    // Lets make some indexes over vertice-positions corresponding to edges and corners
     this.edges = {
       top: [],
       left: [],
@@ -290,6 +290,8 @@ var wxs3 = wxs3 || {};
       this.tileLoader([ neighbourCalls[neighbourCall] ], false);
     }
     // remove processed background
+    // TODO: Find out if we need to run geometry.dispose() first.
+    this.backgroundGroup.getObjectByName(tileName.zoom + '_' + tileName.tileRow + '_' + tileName.tileCol).geometry.dispose();
     this.backgroundGroup.remove(this.backgroundGroup.getObjectByName(tileName.zoom + '_' + tileName.tileRow + '_' + tileName.tileCol));
   };
 
@@ -308,6 +310,7 @@ var wxs3 = wxs3 || {};
         //if (this.foregroundTiles.indexOf(name.zoom+'_'+tr+'_'+tc) ==-1) {
         if (typeof this.foregroundGroup.getObjectByName(tileName.zoom + '_' + tr + '_' + tc) === "undefined") {
           // Add tile to index over loaded tiles
+          // TODO: Do we still use this?
           this.foregroundTiles.push((tileName.zoom + 1) + '_' + tr + '_' + tc);
           WMTSCalls.push(this.singleTileFetcher(tc, tr, this.foregroundMatrix));
         }
@@ -325,11 +328,13 @@ var wxs3 = wxs3 || {};
     var tileRowMax = tileRow + 1;
     // Here we generate tileColumns and tileRows as well as  translate tilecol and tilerow to boundingboxes
     for (tc = tileColMin; tc <= tileColMax; tc++)
-      for (tr = tileRowMin; tr <= tileRowMax; tr++)
-        if (this.backgroundTiles.indexOf(tileName.zoom + '_' + tr + '_' + tc) == -1) {
+      for (tr = tileRowMin; tr <= tileRowMax; tr++){
+      // TODO: Why do we still use this instead of backgroundGroup.getObjectByName()
+      if (this.backgroundTiles.indexOf(tileName.zoom + '_' + tr + '_' + tc) == -1) {
           this.backgroundTiles.push(tileName.zoom + '_' + tr + '_' + tc);
           WMTSCalls.push(this.singleTileFetcher(tc, tr, this.backgroundMatrix));
         }
+      }
     return WMTSCalls;
   };
 
@@ -418,52 +423,87 @@ var wxs3 = wxs3 || {};
    }
      
     var tile = this.foregroundGroup.getObjectByName(name);
+    // If the tile is already processed on edges we skip
     if(!tile.geometry.processed['allSides']){
       if (!tile.geometry.processed['top']){
-        this.geometryTester(tile, neighbours['top'], 'top');
+        this.geometryEdgeTester(tile, neighbours['top'], 'top');
       }
       if (!tile.geometry.processed['bottom']){
-        this.geometryTester(tile, neighbours['bottom'], 'bottom');
+        this.geometryEdgeTester(tile, neighbours['bottom'], 'bottom');
       }
       if (!tile.geometry.processed['left']){
-        this.geometryTester(tile, neighbours['left'], 'left');
+        this.geometryEdgeTester(tile, neighbours['left'], 'left');
       }
       if (!tile.geometry.processed['right']){
-        this.geometryTester(tile, neighbours['right'], 'right');
+        this.geometryEdgeTester(tile, neighbours['right'], 'right');
       }
     }
+    // Test if neighbours are loaded
     else
     {
       if (!tile.geometry.processed['topLeft']){
-        this.geometryTester(tile, neighbours['topLeft'], 'topLeft');
+        this.geometryCornerTester(tile,
+          [ neighbours['topLeft'],
+            neighbours['left'],
+            neighbours['top']
+          ],
+          [ 'topLeft',
+            'left',
+            'top'
+          ]);
       }
       if (!tile.geometry.processed['bottomLeft']){
-        this.geometryTester(tile, neighbours['bottomLeft'], 'bottomLeft');
+        this.geometryCornerTester(tile,
+          [ neighbours['bottomLeft'],
+            neighbours['left'],
+            neighbours['bottom']
+          ],
+          [ 'bottomLeft',
+            'left',
+            'bottom'
+          ]);
       }
-      if (!tile.geometry.processed['bottomLeft']){
-        this.geometryTester(tile, neighbours['bottomLeft'], 'bottomLeft');
+      if (!tile.geometry.processed['bottomRight']){
+        this.geometryCornerTester(tile,
+          [ neighbours['bottomRight'],
+            neighbours['right'],
+            neighbours['bottom']
+          ],
+          [ 'bottomRight',
+            'right',
+            'bottom'
+          ]);
       }
       if (!tile.geometry.processed['topRight']){
-        this.geometryTester(tile, neighbours['topRight'], 'topRight');
+        this.geometryCornerTester(tile,
+          [ neighbours['topRight'],
+            neighbours['right'],
+            neighbours['top']
+          ],
+          [ 'topRight',
+            'right',
+            'top'
+          ]);
       }
 
     }
   };
 
-  ns.ThreeDMap.prototype.geometryTester = function (tile, neighbourName, placement) {
+  ns.ThreeDMap.prototype.geometryEdgeTester = function (tile, neighbourName, placement) {
     var neighbour; //, tile;
     if (this.foregroundGroup.getObjectByName(neighbourName)) {
       neighbour = this.foregroundGroup.getObjectByName(neighbourName);
       if (neighbour.geometry.loaded == true && neighbour.scale.z >= 1) {
         if (tile.geometry.loaded == true) {
-          this.geometryFixer(tile, neighbour, placement);
+          this.geometryEdgeFixer(tile, neighbour, placement);
         }
       }
       
     }
   };
 
-  ns.ThreeDMap.prototype.geometryFixer = function (tile, neighbour, placement) {
+
+  ns.ThreeDMap.prototype.geometryEdgeFixer = function (tile, neighbour, placement) {
     var i, oppositeEdge;
     // Edges
     oppositeEdge ={
@@ -494,6 +534,100 @@ var wxs3 = wxs3 || {};
       neighbour.geometry.processed['allSides'] = true;
       if (neighbour.geometry.processed['topLeft'] & neighbour.geometry.processed['bottomLeft'] & neighbour.geometry.processed['bottomRight'] & neighbour.geometry.processed['topRight'] )
         neighbour.geometry.processed['all'] = true;
+    }
+  };
+
+
+    ns.ThreeDMap.prototype.geometryCornerTester = function (tile, neighbourNames, placements) {
+    var neighbour; //, tile;
+    var neighbours=[];
+    if (tile.geometry.loaded == true) {
+      for (var i in placements){
+          if (this.foregroundGroup.getObjectByName(neighbourNames[i])) {
+            var neighbour=this.foregroundGroup.getObjectByName(neighbourNames[i]);
+            // Populate array with neighbour
+            if (neighbour.geometry.loaded == true && neighbour.scale.z >= 1) {
+              neighbours.push(neighbour);
+          }
+        }
+      }
+    }
+    // Check to see if we have all neighbours
+    if(neighbours.length==3)
+      this.geometryCornerFixer(tile, neighbours, placements);
+  };
+
+    ns.ThreeDMap.prototype.geometryCornerFixer = function (tile, neighbours, placements) {
+    // Index to invert corners
+    // TODO: This is not very easy to read. Might need a better solution
+    var oppositeCorners={
+      topLeft: {
+        topLeft: 'bottomRight',
+        left: 'topRight',
+        top: 'bottomLeft'
+      },
+      bottomRight: {
+        bottomRight: 'topLeft',
+        right: 'bottomLeft',
+        bottom:'topRight'
+      },
+      topRight: {
+        topRight: 'bottomLeft',
+        right: 'topLeft',
+        top: 'bottomRight'
+      },
+      bottomLeft: {
+        bottomLeft: 'topRight',
+        left: 'bottomRight',
+        bottom: 'topLeft'
+      }
+    }
+
+    // Calculate average height
+    var averageHeightCorner=
+      (
+      tile.geometry.vertices[this.edges[placements[0]]].z +
+      neighbours[0].geometry.vertices[this.edges[
+      oppositeCorners[placements[0]][placements[0]]
+      ]].z +
+      neighbours[1].geometry.vertices[this.edges[
+      oppositeCorners[placements[0]][placements[1]]
+      ]].z +
+      neighbours[2].geometry.vertices[this.edges[
+      oppositeCorners[placements[0]][placements[2]]
+      ]].z
+      ) /4;
+
+    // Set vertex on tile and neighbours to average value
+    tile.geometry.vertices[this.edges[placements[0]]].z=averageHeightCorner;
+    neighbours[0].geometry.vertices[this.edges[
+    oppositeCorners[placements[0]][placements[0]]
+    ]].z=averageHeightCorner;
+    neighbours[1].geometry.vertices[this.edges[
+    oppositeCorners[placements[0]][placements[1]]
+    ]].z=averageHeightCorner;
+    neighbours[2].geometry.vertices[this.edges[
+    oppositeCorners[placements[0]][placements[2]]
+    ]].z=averageHeightCorner;
+
+    // Flag for update
+    tile.geometry.verticesNeedUpdate=true;
+    neighbours[0].geometry.verticesNeedUpdate=true;
+    neighbours[1].geometry.verticesNeedUpdate=true;
+    neighbours[2].geometry.verticesNeedUpdate=true;
+
+    // Flag corners as processed
+    tile.geometry.processed[placements[0]]=true;
+    neighbours[0].geometry.processed[oppositeCorners[placements[0]][placements[0]]]=true;
+    neighbours[1].geometry.processed[oppositeCorners[placements[0]][placements[1]]]=true;
+    neighbours[2].geometry.processed[oppositeCorners[placements[0]][placements[2]]]=true;
+
+    // Check if all corners are averaged and flag if so
+    if ( tile.geometry.processed['topLeft'] & tile.geometry.processed['bottomLeft'] & tile.geometry.processed['bottomRight'] & tile.geometry.processed['topRight'] )
+      tile.geometry.processed['all'] = true;
+    for (var i =0; i<3;i++){
+      if (neighbours[i].geometry.processed['topLeft'] & neighbours[i].geometry.processed['bottomLeft'] & neighbours[i].geometry.processed['bottomRight'] & neighbours[i].geometry.processed['topRight'] )
+        neighbours[i].geometry.processed['all'] = true;
     }
   }
 }(wxs3));
