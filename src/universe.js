@@ -64,13 +64,15 @@ Dim = {
   },
   crs: getQueryVariable("CRS") || getQueryVariable("SRS") || '32633',
   coverage: getQueryVariable("COVERAGE") || 'land_utm33_10m',
-  wmsUrl: getQueryVariable("WMS") || 'http://wms.geonorge.no/skwms1/wms.topo2',
+  wmsUrl: getQueryVariable("WMS") || false,
   wmtsLayer: getQueryVariable("LAYER") || 'topo2',
+  wmsLayers: getQueryVariable("LAYERS") || 'topo2',
   wmtsUrl: getQueryVariable("WMTS") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
   wmscUrl:  getQueryVariable("WMSC") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_cache',
   wcsUrl: getQueryVariable("WCS")||'http://wms.geonorge.no/skwms1/wcs.dtm',
   wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
   wmsFormatMode: "",
+  gatekeeperTicket: getQueryVariable("GKT")||false,
   zMult: getQueryVariable("ZMULT") || 1
 };
 
