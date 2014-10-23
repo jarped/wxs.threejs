@@ -132,9 +132,10 @@ var wxs3 = wxs3 || {};
     for (i = 0; i < this.foregroundGroup.children.length; i++) {
       if (this.foregroundGroup.children[i].scale.z < 1 && this.foregroundGroup.children[i].geometry.loaded == true) {
         this.foregroundGroup.children[i].scale.z += 0.02;
+
       }
       else if (this.foregroundGroup.children[i].scale.z >= 1) {
-        this.foregroundGroup.children[i].material.wireframe=false;
+        //this.foregroundGroup.children[i].material.wireframe=false;
         if (this.foregroundGroup.children[i].geometry.processed['all'] == false) {
           this.neighbourTest(this.foregroundGroup.children[i].WMTSCall);
         }
@@ -179,7 +180,7 @@ var wxs3 = wxs3 || {};
 
     // Here we find the first matrix that has a tilespan smaller than that of the smallest dimension of the input bbox.
     // We can control the resolution of the images by altering how large a difference there must be (half, quarter etc.)
-    spanDivisor = 2;
+    spanDivisor = 4;
     for (tileMatrix = 0; tileMatrix < tileMatrixCount; tileMatrix++) {
       if (querySpanMinDim == 'x') {
         if (tileMatrixSet[tileMatrix].TileSpanX < querySpanMin / spanDivisor) {
@@ -375,19 +376,20 @@ var wxs3 = wxs3 || {};
         else
           activeUrl=WMTSCalls[i].url.cache_WMTS;
 
-
+        // TODO: Create a loader for images based on the WCS-loader. This allows us to check if the image actually loads and reload if something fails. Also, we can use wireframes as a placeholder.
         material = new THREE.MeshBasicMaterial(
           {
+            
             map: THREE.ImageUtils.loadTexture(
-              //WMTSCalls[i].url.cache_WMTS,
-              //WMTSCalls[i].url.wms,
               activeUrl,
               new THREE.UVMapping()
             ),
-            //side: THREE.DoubleSide,
+
+            //side: THREE.DoubleSide
             //wireframe: true
           }
         );
+        //material.depthWrite=false;
         //material.map.image.hidden=true;
       }
       else {
@@ -575,6 +577,7 @@ var wxs3 = wxs3 || {};
     ns.ThreeDMap.prototype.geometryCornerFixer = function (tile, neighbours, placements) {
     // Index to invert corners
     // TODO: This is not very easy to read. Might need a better solution
+    // TODO: This is constant and should be defined only once
     var oppositeCorners={
       topLeft: {
         topLeft: 'bottomRight',
