@@ -38,7 +38,7 @@ The solution uses web services from Kartverket which are subject to their own li
 wms.three-untiled - history:
 ============================
 
-2014.11.21:
+2014.11.12:
 
 - The application reads one image (WMS or IMAGE) and no tiles.
 

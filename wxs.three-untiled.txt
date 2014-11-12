@@ -1,6 +1,6 @@
-wms.three-untiled - history:
+﻿wms.three-untiled - history:
 
-2014.11.21:
+2014.11.12:
 
 - The application reads one image (WMS or IMAGE) and no tiles.
 
