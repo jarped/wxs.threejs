@@ -48,7 +48,7 @@ Dim = {
   demHeight: 0,
   pixelsPerVertex: 8,//the resolution of the height model in the image
   wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
-  wcsResolution: 10, //meters
+  wcsResolution: 10, //resolution of grid cell in meters
   proxy: "",
   
   bbox: h.getQueryVariable("BBOX")||'161244,6831251,171526,6837409',
