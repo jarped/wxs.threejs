@@ -54,7 +54,7 @@ wxs.threejs-untiled
 
 - Uses the concept of "pixels per vertex" to define the resolution of the height model in the image. Explicit configuration of height model dimensions (demWidth, demHeight) are not used. 
 
-- When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution. Adjustment to actual resolution are made to avoid stairs effect in the height model.
+- When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution. Adjustment to actual resolution is made to avoid stairs effect in the height model.
 
 Todo:
 - Hillshade
