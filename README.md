@@ -40,11 +40,11 @@ wms.three-untiled - history:
 
 2014.11.12:
 
-- The application reads one image (WMS or IMAGE) and no tiles.
+- The application reads one image (WMS or IMAGE) with no tiles.
 
 - The IMAGE parameter is used for a static image or an image composed from multiple WMS calls before the application is called.
 
-- WCS format: The application can be easily be configured using XYZ or geotiff parameter. Geotiff is less voluminous and is lot faster.
+- WCS format: The application can be easily be configured using XYZ or geotiff parameter. Geotiff is less voluminous and is a lot faster.
 
 - The Model (canvas) adapts to its container when resized (responsive).
 
@@ -52,9 +52,9 @@ wms.three-untiled - history:
 
 - The Vertical center of the height model is adjusted to (min + max) / 2. If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level, a tipping of the model will cause the map to disappear over the screen top without this adjustment. On a computer you can move the model down width a right-click-drag, but not on a mobile device.
 
-- Uses the consept of "pixels per vertex" to define the resolution of the height model in the image. Explicit configuration of height model dimensions (demWidth, demHeight) are not used. 
+- Uses the concept of "pixels per vertex" to define the resolution of the height model in the image. Explicit configuration of height model dimensions (demWidth, demHeight) are not used. 
 
-- When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution. Adjustments to actual resolution are made to avoid stairs effect in the height model.
+- When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution. Adjustment to actual resolution are made to avoid stairs effect in the height model.
 
 Todo:
 - Hillshade
