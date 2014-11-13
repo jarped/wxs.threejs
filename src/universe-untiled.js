@@ -47,10 +47,11 @@ Dim = {
   demWidth: 0,
   demHeight: 0,
   pixelsPerVertex: 8,//the resolution of the height model in the image
-
-  bbox: h.getQueryVariable("BBOX")||'161244,6831251,171526,6837409',
   wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
+  wcsResolution: 10, //meters
   proxy: "",
+  
+  bbox: h.getQueryVariable("BBOX")||'161244,6831251,171526,6837409',
   crs: h.getQueryVariable("CRS") || h.getQueryVariable("SRS") || 'EPSG:32633',
   coverage: h.getQueryVariable("COVERAGE") || 'land_utm33_10m',//'land_utm33_10m',
   imgUrl: h.getQueryVariable("IMAGE")||false,
@@ -102,12 +103,12 @@ Dim = {
 	
 	//When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution.
 	//Adjustments to actual resolution are made to avoid stairs effect in the height model.
-	if (this.demWidth>this.metersWidth/10){
+	if (this.demWidth>this.metersWidth/this.wcsResolution){
 		//ajust to avoid stairs in the model - reduse dem to actual resolution
-		this.demWidth = Math.round(this.metersWidth/10);
-		this.demHeight = Math.round(this.metersHeight/10);
+		this.demWidth = Math.round(this.metersWidth/this.wcsResolution);
+		this.demHeight = Math.round(this.metersHeight/this.wcsResolution);
 	}
-	console.log(this.demWidth, this.demHeight);
+	//console.log(this.demWidth, this.demHeight);
 	
 	//Adjust zMult
 	var proportionWidth=this.metersWidth/this.demWidth; // mapunits between vertexes in x-dimention
