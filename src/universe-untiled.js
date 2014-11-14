@@ -102,7 +102,7 @@ Dim = {
 	this.demHeight = Math.round(this.imgHeight / this.pixelsPerVertex);
 	
 	//When zooming into large scales, the computed resolution of the height model will be larger than the actual resolution.
-	//Adjustments to actual resolution are made to avoid stairs effect in the height model.
+	//Adjustment to actual resolution is made to avoid stairs effect in the height model.
 	if (this.demWidth>this.metersWidth/this.wcsResolution){
 		//ajust to avoid stairs in the model - reduse dem to actual resolution
 		this.demWidth = Math.round(this.metersWidth/this.wcsResolution);
