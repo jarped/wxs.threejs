@@ -33,8 +33,9 @@ var wxs3 = wxs3 || {};
 	};
 	
 	ns.ThreeDMap.prototype.createRenderer = function () {
-		var renderer = new THREE.WebGLRenderer({ 
-			//antialias: true
+		var renderer = new THREE.WebGLRenderer({
+			alpha: true/*,
+			antialias: true*/
 		});
 		renderer.setSize(this.dim.width, this.dim.height);
 
