@@ -98,7 +98,7 @@ var wxs3 = wxs3 || {};
 			profile = [//Bbox32: 528887,7005717,574049,7081214 //Bbox33: 234173,7012909,272075,7092359
 			{
 				name: "Profile 0",
-				imgUrl: "/website/webgl/img/trondheim_A_test_alpha_1.png",
+				imgUrl: "img/trondheim_A_test_alpha_1.png",
 				CRS: "EPSG:32632",
 				xyStart: {x: 528887, y: 7081214},
 				xyEnd: {x: 574049, y: 7005717},
