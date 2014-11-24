@@ -47,7 +47,7 @@ Dim = {
   demWidth: 0,
   demHeight: 0,
   pixelsPerVertex: 8,//the resolution of the height model in the image
-  wcsUrl: location.protocol+'//wms.geonorge.no/skwms1/wcs.dtm',
+  wcsUrl: location.protocol+'://wms.geonorge.no/skwms1/wcs.dtm',
   wcsResolution: 10, //resolution of grid cell in meters
   proxy: "",
   
@@ -55,7 +55,7 @@ Dim = {
   crs: h.getQueryVariable("CRS") || h.getQueryVariable("SRS") || 'EPSG:32633',
   coverage: h.getQueryVariable("COVERAGE") || 'land_utm33_10m',//'land_utm33_10m',
   imgUrl: h.getQueryVariable("IMAGE")||false,
-  wmsUrl: h.getQueryVariable("WMS") || location.protocol+'//wms.geonorge.no/skwms1/wms.topo2',
+  wmsUrl: h.getQueryVariable("WMS") || location.protocol+'://wms.geonorge.no/skwms1/wms.topo2',
   //wmsUrl: h.getQueryVariable("WMS") || 'http://openwms.statkart.no/skwms1/wms.topo2',
   wmsLayers: h.getQueryVariable("LAYERS") || 'topo2_WMS',//layers //'topo2_WMS'
   wmsFormat: h.getQueryVariable("FORMAT") || "image/png",
