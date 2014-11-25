@@ -48,7 +48,7 @@ wxs.threejs-untiled
 
 - The Model (canvas) adapts to its container when resized (responsive).
 
-- The image size is preserved width parameters WIDTH and HEIGHT which preserve the initial image quality on large screens. These parameters are indirectly used to compute the dimensions of the height model. 
+- The image size is preserved with parameters WIDTH and HEIGHT which preserve the initial image quality on large screens. These parameters are indirectly used to compute the dimensions of the height model. 
 
 - The Vertical center of the height model is adjusted to (min + max) / 2. If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level, a tipping of the model will cause the map to disappear over the screen top without this adjustment. On a computer you can move the model down with a right-click-drag, but not on a mobile device.
 
@@ -59,4 +59,37 @@ wxs.threejs-untiled
 Todo:
 - Hillshade
 
-Sverre Iversen, Geolological survey of Norway
+
+wxs.threejs-profile
+===================
+
+2014.11.25:
+
+- As wxs.threejs-untiled and the possibility to place vertical profiles in the model.
+
+- The kode is prepared to handle a future data base for profiles:
+	- a future url with parameter "bbox" and possibly additional parameters.
+	- a future JSON response with profile metadata
+
+- Transformation from source transformation system to destination transformation system and finally transformation to local grid model coordinates.
+
+- A JSON response example used in the kode:
+	profile = [//Bbox32: 528887,7005717,574049,7081214 
+	{ 
+		name: "Profile 0", 
+			imgUrl: "img/trondheim_A_test_alpha_1.png", 
+			CRS: "EPSG:32632", 
+			xyStart: {x: 528887, y: 7081214}, 
+			xyEnd: {x: 574049, y: 7005717}, 
+			zStart: 900, 
+			zEnd: -1406 
+	}, 
+	{ 
+			name: "Profile 1", 
+			imgUrl: "/website/webgl/img/trondheim_A_test_alpha_1.png", 
+			CRS: "EPSG:32632", 
+			xyStart: {x: 570000, y: 7070000}, 
+			xyEnd: {x: 540000, y: 7010000}, 
+			zStart: 900, 
+			zEnd: -1406 
+	}]; 
