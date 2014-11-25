@@ -67,29 +67,28 @@ wxs.threejs-profile
 
 - As wxs.threejs-untiled and the possibility to place vertical profiles in the model.
 
-- The kode is prepared to handle a future data base for profiles:
+- The code is prepared to handle a future data base for profiles:
 	- a future url with parameter "bbox" and possibly additional parameters.
 	- a future JSON response with profile metadata
 
 - Transformation from source transformation system to destination transformation system and finally transformation to local grid model coordinates.
 
 - A JSON response example used in the kode:
-	profile = [//Bbox32: 528887,7005717,574049,7081214 
-	{ 
-		name: "Profile 0", 
-			imgUrl: "img/trondheim_A_test_alpha_1.png", 
-			CRS: "EPSG:32632", 
-			xyStart: {x: 528887, y: 7081214}, 
-			xyEnd: {x: 574049, y: 7005717}, 
-			zStart: 900, 
-			zEnd: -1406 
-	}, 
-	{ 
-			name: "Profile 1", 
-			imgUrl: "/website/webgl/img/trondheim_A_test_alpha_1.png", 
-			CRS: "EPSG:32632", 
-			xyStart: {x: 570000, y: 7070000}, 
-			xyEnd: {x: 540000, y: 7010000}, 
-			zStart: 900, 
-			zEnd: -1406 
-	}]; 
+>	profile = [//Bbox32: 528887,7005717,574049,7081214 
+>	{ 
+>		name: "Profile 0", 
+>			imgUrl: "img/trondheim_A_test_alpha_1.png", 
+>			CRS: "EPSG:32632", 
+>			xyStart: {x: 528887, y: 7081214}, 
+>			xyEnd: {x: 574049, y: 7005717}, 
+>			zEnd: -1406 
+>	}, 
+>	{ 
+>			name: "Profile 1", 
+>			imgUrl: "/website/webgl/img/trondheim_A_test_alpha_1.png", 
+>			CRS: "EPSG:32632", 
+>			xyStart: {x: 570000, y: 7070000}, 
+>			xyEnd: {x: 540000, y: 7010000}, 
+>			zStart: 900, 
+>			zEnd: -1406 
+>	}]; 
