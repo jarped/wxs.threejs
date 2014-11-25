@@ -73,8 +73,9 @@ wxs.threejs-profile
 
 - Transformation from source transformation system to destination transformation system and finally transformation to local grid model coordinates.
 
-- A JSON response example used in the kode:
+	A JSON response example used in the kode:
 
+```sh
 	profile = [//Bbox32: 528887,7005717,574049,7081214 
 	{ 
 		name: "Profile 0", 
@@ -92,4 +93,5 @@ wxs.threejs-profile
 			xyEnd: {x: 540000, y: 7010000}, 
 			zStart: 900, 
 			zEnd: -1406 
-	}]; 
+	}];
+```
