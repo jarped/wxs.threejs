@@ -1,0 +1,1 @@
+http://iversen-sw7.ngu.no/website/webgl/wxs.three-untiled.html?WIDTH=1545&HEIGHT=971&BBOX=145809.04976364,6851726.8782949,146221.79950054,6851986.2828221&IMAGE=http://iversen-sw7.ngu.no/website/webgl/img/TopoGaldhopiggen.png&zMult=1.0

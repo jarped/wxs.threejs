@@ -1,0 +1,1 @@
+http://geotest.ngu.no/kart/webgl/wxs.three5.html?WIDTH=1545&HEIGHT=1019&BBOX=509850.21064421,7617920.6162425,514942.63158509,7621279.3068177&IMAGE=/kart/webgl/img/TopoSortland1.png&zMult=1.5
