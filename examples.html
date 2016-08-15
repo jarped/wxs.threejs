@@ -1,0 +1,135 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>WebGL – 2.5D eksempler</title>
+<script>
+var textList = [
+	{
+		nor: 	
+			"<h1>WebGL-eksempler fra NGU</h1>"+
+			"- Rotér og tipp modellen: klikk og dra / en finger (touch)<br/>"+
+			"- Zoom: rull m musa / to fingre og klyp (touch)<br/>"+
+			"- Flytt modellen: høyreklikk og dra / to fingre og dra (touch)<br/>"+
+			"<br/>Kartverket: Topografisk basiskart WMS (topo2)<br/>",
+		eng: 	
+			"<h1>WebGL examples from Geological Survey of Norway</h1>"+
+			"- Rotate and tip of the model: click and drag / one finger (touch)<br/>"+
+			"- Zoom: roll the mouse / two fingers and pinch (touch)<br/>"+
+			"- Move the model: right click and drag / two fingers and drag (touch)<br/>"+
+			"<br/>Norwegian Mapping Authority: Topographic base Map WMS (topo2)<br/>"
+	},
+	{
+		nor: "Løsmasse (Snøhetta)",
+		eng: "Superficial deposits (Snøhetta)",
+		url: "wxs.three-untiled.html?WIDTH=1012&HEIGHT=839&BBOX=193007.395616,6914925.418977,206822.009973,6926378.44412"+
+			"&IMAGE=img/LosmasseSnohetta.png&ZMULT=1.5"
+	},
+	{
+		nor: "Berggrunn N50 (Salten)",
+		eng: "Bedrock 1:50000 (Salten)",
+		url: "wxs.three-untiled.html?WIDTH=1074&HEIGHT=831&BBOX=487289.493566,7440480.462205,510571.125063,7458494.461994"+
+			"&IMAGE=img/BerggrunnN50Salten.png&ZMULT=3"
+	},
+	{
+		nor: "Berggrunn N50 (Junkerdalen)",
+		eng: "Bedrock 1:50000 (Junkerdalen)",
+		url: "wxs.three-untiled.html?WIDTH=1074&HEIGHT=831&BBOX=512506.233215,7406176.090985,536472.201278,7424719.591413"+
+			"&IMAGE=img/BerggrunnN50Junkerdal.png&ZMULT=2"
+	},
+	{
+		nor: "Grus og pukk (Hovin)",
+		eng: "Sand, gravel and hard-rock aggregates (Hovin)",
+		url: "wxs.three-untiled.html?WIDTH=1014&HEIGHT=864&BBOX=253981.661365,7002940.544869,263644.312226,7011173.809508"+
+			"&IMAGE=img/GrusPukkHovin.png&ZMULT=3"
+	},	
+	{
+		nor: "Løsmasse (Tønsberg)",
+		eng: "Superficial deposits (Tønsberg)",
+		url: "wxs.three-untiled.html?WIDTH=1046&HEIGHT=702&BBOX=220820.954557,6572848.558636,245715.889714,6589556.249344"+
+			"&IMAGE=img/LosmasseTonsberg.png&ZMULT=9"
+	},	
+	{
+		nor: "Løsmasse og marin grense (Trondheim)",
+		eng: "Superficial deposits and marin upper limit (Trondheim)",
+		url: "wxs.three-untiled.html?WIDTH=1545&HEIGHT=1019&BBOX=262116.62423715,7040302.9486143,269109.30565771,7044914.9501467"+
+			"&IMAGE=img/LosmasseTrondheim.png&zMult=3.0"
+	},	
+	{
+		nor: "Infiltrasjonsevne (Tønsberg)",
+		eng: "Infiltration capability (Tønsberg)",
+		url: "wxs.three-untiled.html?WIDTH=1046&HEIGHT=702&BBOX=220820.954557,6572848.558636,245715.889714,6589556.249344"+
+			"&IMAGE=img/InfiltrEvneTonsberg.png&ZMULT=9"
+	},	
+	{
+		nor: "NIBIO (Norsk institutt for bioøkonomi): Erosjonsrisiko (Lavangen)",
+		eng: "NIBIO - Norwegian Institute of Bioeconomy Research: Potential erosion risk (Lavangen)",
+		url: "wxs.three-untiled.html?WIDTH=1431&HEIGHT=914&BBOX=611251.57364034,7633014.6518597,612560.4910893,7633850.6760025"+
+			"&IMAGE=img/SkogOgLandskapErosjonsrisiko.png&ZMULT=2.5"
+	},	
+	{
+		nor: "Miljødirektoratet: Arter (Lyngen)",
+		eng: "Norwegian Environment Agency: Species (Lavangen)",
+		url: "wxs.three-untiled.html?WIDTH=805&HEIGHT=915&BBOX=669751.181344,7698733.808998,697453.883835,7730221.973942"+
+			"&IMAGE=img/MijodirektoratetArter.png&ZMULT=1.5"
+	},	
+	{
+		nor: "Kartverket: Galdhøpiggen \"close-up\"",
+		eng: "Norwegian Mapping Authority: Mountain Galdhøpiggen \"close-up\"",
+		url: "wxs.three-untiled.html?WIDTH=1545&HEIGHT=971&BBOX=145809.04976364,6851726.8782949,146221.79950054,6851986.2828221"+
+			"&IMAGE=img/TopoGaldhopiggen.png&zMult=1.0"
+	},	
+	{
+		nor: "Ustabile fjell (Mannen)",
+		eng: "Ustable rock slopes (Mountain Mannen)",
+		url: "wxs.three-untiled.html?&WIDTH=1545&HEIGHT=919&BBOX=124280.96947179,6943534.4731734,131274.20207573,6948146.838237"+
+			"&IMAGE=img/UstabileFjellMannen.png&ZMULT=1.0"
+	},	
+	{	nor: "Havbunn med dybdedata fra batymetri",
+		eng: "Ocean floor depthdata from bathymetric",
+		url: "http://labs.kartverket.no/threejs/wxs.three.html?wms=http://openwms.statkart.no/skwms1/wms.havbunnraster2&layers=Havbunnraster2_WMS&coverage=bathymetry50m&zmult=-3&bbox=463017,7660721,492098,7680803&WMSFORMAT=image/png&WMSFORMATMODE=24bit"
+	},
+	{
+		nor: "Fra NGU 3D prosjekt: Topografi + en berggrunnsprofil som ligger under modellen (Trondheim)",
+		eng: "From a 3D prosjekt at the Geological Survey of Norway: Topography + one bedrock profile placed underneath the model (Trondheim)",
+		url: "wxs.three-profile.html?WIDTH=1007&HEIGHT=921&BBOX=207128.41406537,7007786.9589679,302470.86791987,7094986.9589679"+
+			"&zMult=4.0"
+	},	
+	{
+		nor: "Fra NGU 3D prosjekt: Berggrunn + en berggrunnsprofil som ligger under modellen (Trondheim)",
+		eng: "From a 3D prosjekt at the Geological Survey of Norway: Bedrock + one bedrock profile placed underneath the model (Trondheim)",
+		url: "wxs.three-profile.html?WIDTH=1007&HEIGHT=921&BBOX=207128.41406537,7007786.9589679,302470.86791987,7094986.9589679"+
+			"&IMAGE=img/TrondheimBerggrunn2.png&zMult=4.0"
+	},	
+	{
+		nor: "Fra NGU 3D prosjekt: Berggrunn + to kryssende berggrunnsprofiler som ligger i modellen (Namsos)",
+		eng: "From a 3D prosjekt at the Geological Survey of Norway: Bedrock + two crossing bedrock profiles placed underneath the model (Namsos)",
+		url: "wxs.three-profile2.html?WIDTH=1028&HEIGHT=942&BBOX=295392.13836159,7093561.5478055,363342.08214963,7155826.9632221"+
+			"&IMAGE=img/BerggrunnNamsos.png&zMult=6.5"
+	}
+]
+
+function displayPage(){
+	var lang = getLanguage(), html = textList[0][lang];
+	for (var i=1; i<textList.length; i++){
+		html += '<br/><br/><a href="'+textList[i].url+'">'+textList[i][lang]+'</a>';
+	}
+	document.write(html);
+}
+
+function getLanguage(){
+	var args = unescape(document.location.search.substr(1,document.location.search.length-1)).split('&'),
+		lang = "nor";
+	
+	for (var i=0; i<args.length; i++){
+		keyValue = args[i].split('=');
+		if (keyValue[0] == "lang" && keyValue[1] == "eng") lang = keyValue[1];
+	}
+	return lang;	
+}
+</script>
+</head>
+
+<body onload="displayPage()">
+</body>
+
+</html>

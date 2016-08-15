@@ -10,23 +10,27 @@ var wxs3 = wxs3 || {};
 		this.height = [];
 		this.midHeight = null;
 		this.wcsFormat = "geotiff"; //XYZ, geotiff
+		this.imageMap = this.getImageMap();
 
 		this.renderer =	this.createRenderer();	
 		this.camera = 	this.createCamera();
 		this.controls = this.createControls();
 		this.geometry = this.createGeometry();	
-		
-		this.wcsFetcher();
-		
 		this.material = this.createMaterial();
+		
+		//Create Mesh and Scene
 		this.mesh = 	this.createMesh(this.geometry, this.material);
 		this.scene = 	this.createScene(this.mesh);
 
 		//Add webgl canvas to div
 		this.dim.div.appendChild(this.renderer.domElement);
-				
+		
 		//Start renderer and listen to changes in geometry
 		this.render();
+		
+		//Load height model, map texture and profiles asynchronously
+		this.wcsFetcher();//which contains call on profileFetcher();
+		this.textureFetcher(this.imageMap, this.material);
 		
 		//Adust canvas if container is resized
 		window.addEventListener('resize', this.resizeMe.bind(this), false);
@@ -44,7 +48,8 @@ var wxs3 = wxs3 || {};
 
 	ns.ThreeDMap.prototype.createScene = function (mesh) {  
 		var scene = new THREE.Scene();
-		scene.add(new THREE.AmbientLight(0xeeeeee));
+		//Ambient Light for MeshPhongMaterial
+		scene.add(new THREE.AmbientLight(0xffffff));
 		scene.add(mesh);
 		return scene;
 	};
@@ -90,12 +95,50 @@ var wxs3 = wxs3 || {};
 
 		return geometry;
 	};
+	
+	ns.ThreeDMap.prototype.getImageMap = function(){
+		var imageCall;
+		if (this.dim.imgUrl){//IMAGE
+			imageCall = this.dim.imgUrl;	
+		} else {//WMS
+			imageCall = this.dim.wmsUrl+"?service=wms&version=1.3.0&request=getmap&crs="+this.dim.crs+
+				//"&WIDTH="+this.dim.demWidth*this.dim.wmsMult+"&HEIGHT="+this.dim.demHeight*this.dim.wmsMult+
+				"&WIDTH="+this.dim.imgWidth+"&HEIGHT="+this.dim.imgHeight+
+				"&bbox="+this.dim.bbox+"&layers="+this.dim.wmsLayers+"&format="+this.dim.wmsFormat+this.dim.wmsFormatMode;
+		}	
+		return imageCall;
+	};	
 
+	ns.ThreeDMap.prototype.textureFetcher = function(image, material){
+		var loader = new THREE.TextureLoader(),
+			_this = this;
 
+		// load a resource
+		loader.load(
+			image,
+			function ( texture ) {
+				//Texture is probably not the power of two.
+				//Avoid warning: Apply THREE.LinearFilter or THREE.NearestFilter
+				texture.minFilter = THREE.LinearFilter;
+				
+				//Set texture in material which needs updating
+				material.map = texture;
+				material.needsUpdate = true;
+			},
+			// Function called when download progresses
+			function ( xhr ) {
+				console.log( (xhr.loaded / xhr.total * 100) + '% loaded: ' + image );
+			},
+			// Function called when download errors
+			function ( xhr ) {
+				console.log( 'An error happened on texture load: ' + image );
+			}
+		);
+	};
 	ns.ThreeDMap.prototype.profileFetcher = function () {
 		//json response for profile metadata db query
 		var crsDestination = this.dim.crs,
-			profile = [//Bbox32: 528887,7005717,574049,7081214 //Bbox33: 234173,7012909,272075,7092359
+		profile = [//Bbox32: 528887,7005717,574049,7081214 //Bbox33: 234173,7012909,272075,7092359
 			{
 				name: "Profile 0",
 				imgUrl: "img/trondheim_A_test_alpha_1.png",
@@ -132,9 +175,9 @@ var wxs3 = wxs3 || {};
 		//loop trought profiles
 		for (var i=0; i<profile.length; i++){
 			var verticalGeometry=new THREE.PlaneGeometry(1, 1),
-				verticalMaterial=new THREE.MeshBasicMaterial({
-				//verticalMaterial=new THREE.MeshPhongMaterial({
-					map: THREE.ImageUtils.loadTexture(profile[i].imgUrl),
+				//verticalMaterial=new THREE.MeshBasicMaterial({
+				verticalMaterial=new THREE.MeshPhongMaterial({
+					//map: THREE.ImageUtils.loadTexture(profile[i].imgUrl),
 					side: THREE.DoubleSide,
 					transparent: true
 				}),
@@ -177,6 +220,9 @@ var wxs3 = wxs3 || {};
 			verticalMesh.geometry.vertices[3].z=newEndZ/this.dim.zMult; //-1406/zMult;
 
 			this.scene.add(verticalMesh);
+			
+			//Load profile texture asynchronously
+			this.textureFetcher(profile[i].imgUrl, verticalMaterial);
 		}
 	};
 
@@ -261,22 +307,10 @@ var wxs3 = wxs3 || {};
   	};
 
 	ns.ThreeDMap.prototype.createMaterial = function(){
-		var imageCall;
-		if (this.dim.imgUrl){//IMAGE
-			imageCall = this.dim.imgUrl;	
-		} else {//WMS
-			imageCall = this.dim.wmsUrl+"?service=wms&version=1.1.1&request=getmap&crs="+this.dim.crs+"&srs="+this.dim.crs+
-				//"&WIDTH="+this.dim.demWidth*this.dim.wmsMult+"&HEIGHT="+this.dim.demHeight*this.dim.wmsMult+
-				"&WIDTH="+this.dim.imgWidth+"&HEIGHT="+this.dim.imgHeight+
-				"&bbox="+this.dim.bbox+"&layers="+this.dim.wmsLayers+"&format="+this.dim.wmsFormat+this.dim.wmsFormatMode;
-		}
-				
-		//console.log("imageCall, wireframe", imageCall, this.dim.wireframe);
 		//var material = new THREE.MeshBasicMaterial({ 
-		var material = new THREE.MeshPhongMaterial({ 
-			map: THREE.ImageUtils.loadTexture(imageCall),
-			side: THREE.DoubleSide/*,
-			transparent: true*/
+		var material = new THREE.MeshPhongMaterial({ //for shading and Ambient Light
+			//map: texture,//default=null
+			side: THREE.DoubleSide
 		});
 		material.wireframe=this.dim.wireframe;
 	
