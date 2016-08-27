@@ -1,0 +1,1 @@
+http://geotest.ngu.no/kart/webgl/wxs.three5.html?&WIDTH=1545&HEIGHT=919&BBOX=124280.96947179,6943534.4731734,131274.20207573,6948146.838237&IMAGE=/kart/webgl/img/UstabileFjellMannen.png&ZMULT=1.0
