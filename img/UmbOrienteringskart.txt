@@ -1,1 +1,0 @@
-http://geotest.ngu.no/website/webgl/wxs.three-untiled.html?WIDTH=1212&HEIGHT=985&BBOX=645283.62572476,7727272.7894659,661991.8353131,7740851.6561693&IMAGE=http://geotest.ngu.no/kart/webgl/img/UmbOrienteringskart.png&zMult=2
