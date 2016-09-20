@@ -1,0 +1,33 @@
+{
+  "name": "wxs.threejs",
+  "version": "0.0.0",
+  "description": "wxs.threejs-untiled\r ===================",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jarped/wxs.threejs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jarped/wxs.threejs/issues"
+  },
+  "homepage": "https://github.com/jarped/wxs.threejs#readme",
+  "dependencies": {
+    "babel-core": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.14.0",
+    "install": "^0.8.1",
+    "npm": "^3.10.6",
+    "three": "^0.80.1",
+    "three.trackball": "0.0.1",
+    "underscore": "^1.8.3",
+    "webpack": "^1.13.2"
+  }
+}

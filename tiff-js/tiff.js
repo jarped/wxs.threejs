@@ -709,5 +709,7 @@ TIFFParser.prototype = {
 		}*/
 
 		return this.canvas;
-	},
-}
+	}
+};
+
+export default TIFFParser;

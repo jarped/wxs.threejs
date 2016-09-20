@@ -1,254 +1,406 @@
-var wxs3 = wxs3 || {};
+import {
+    WebGLRenderer,
+    Scene,
+    AmbientLight,
+    PerspectiveCamera,
+    PlaneGeometry,
+    TextureLoader,
+    LinearFilter,
+    MeshPhongMaterial,
+    DoubleSide,
+    Mesh
+} from 'three';
 
-(function (ns) {
-	'use strict';
+import {
+    Line,
+    LineBasicMaterial,
+    Geometry,
+    Vector3
+} from 'three';
 
-	ns.ThreeDMap = function (dim) {
-		var i, length;
-		this.dim = dim;
-		this.reloadTimer = -1;
-		this.height = [];
-		this.midHeight = null;
-		this.wcsFormat = "geotiff"; //XYZ, geotiff
-		this.imageMap = this.getImageMap();
+import TrackballControls from 'three.trackball';
+import * as _ from 'underscore';
+import TIFFParser from './../tiff-js/tiff.js';
 
-		this.renderer =	this.createRenderer();	
-		this.camera = 	this.createCamera();
-		this.controls = this.createControls();
-		this.geometry = this.createGeometry();	
-		this.material = this.createMaterial();
-		
-		//Create Mesh and Scene
-		this.mesh = 	this.createMesh(this.geometry, this.material);
-		this.scene = 	this.createScene(this.mesh);
+import createQueryString from './util/createQueryString';
 
-		//Add webgl canvas to div
-		this.dim.div.appendChild(this.renderer.domElement);
 
-		//Start renderer and listen to changes in geometry
-		this.render();
+var events = function () {
 
-		//Load height model and texture asynchronously
-		this.wcsFetcher();
-		this.textureFetcher(this.imageMap, this.material);
-		
-		//Adust canvas if container is resized
-		window.addEventListener('resize', this.resizeMe.bind(this), false);
-	};
-	
-	ns.ThreeDMap.prototype.createRenderer = function () {
-		var renderer = new THREE.WebGLRenderer({
-			alpha: true/*,
-			antialias: true*/
-		});
-		renderer.setSize(this.dim.width, this.dim.height);
+    var observers = {};
 
-		return renderer;
-	};
+    return {
+        on: function (event, callback) {
+            if (!observers[event]) {
+                observers[event] = [];
+            }
+            observers[event].push(callback);
+        },
+        fire: function (event, data) {
+            if (observers[event]) {
+                _.each(observers[event], function (observer) {
+                    observer(event, data);
+                });
+            }
+        }
+    };
+};
 
-	ns.ThreeDMap.prototype.createScene = function (mesh) {  
-		var scene = new THREE.Scene();
-		//Ambient Light for MeshPhongMaterial
-		scene.add(new THREE.AmbientLight(0xffffff));
-		scene.add(mesh);
-		return scene;
-	};
 
-	ns.ThreeDMap.prototype.createCamera = function () {
-		var camera, cameraHeight,
-		fov = 45;
-	
-		camera = new THREE.PerspectiveCamera(
-			fov,
-			this.dim.width / this.dim.height,
-			0.1,
-			1000
-		);
+var ThreeDMapUntiled = function (dim) {
+    this.dim = dim;
+    this.events = events();
+};
 
-		// Some trig to find height for camera
-		if (!!this.dim.Z) {
-			cameraHeight = this.dim.Z;
-		} else {
-			//Adapt optimal side length according to canvas
-			var sideLength;
-			var canvCoefficient = this.dim.width / this.dim.height;
-			if (canvCoefficient<(this.dim.demWidth/this.dim.demHeight)){
-				sideLength = this.dim.demWidth / canvCoefficient;
-			} else {
-				sideLength = this.dim.demHeight;
-			}
-			
-			//calculate camera height
-			cameraHeight = (sideLength / 2) / Math.tan((fov / 2) * Math.PI / 180);
-		}
-		//console.log("cameraHeight",cameraHeight);
+ThreeDMapUntiled.prototype.on = function (event, callback) {
+    this.events.on(event, callback);
+};
 
-		camera.position.set(0, 0, cameraHeight);
-		camera.lookAt(0, 0, 0);//need this? - see below: this.controls.target
-		
-		return camera;
-	};
-  
-	ns.ThreeDMap.prototype.createGeometry = function(){
-		var geometry;
-		geometry = new THREE.PlaneGeometry(this.dim.demWidth, this.dim.demHeight, this.dim.demWidth-1, this.dim.demHeight-1);
+ThreeDMapUntiled.prototype.init = function () {
+    this.reloadTimer = -1;
+    this.height = [];
+    this.midHeight = null;
+    this.wcsFormat = 'geotiff'; //XYZ, geotiff
 
-		return geometry;
-	};
+    this.renderer = this.createRenderer();
+    this._camera =   this.createCamera();
+    this.controls = this.createControls();
+    this.geometry = this.createGeometry();
 
-	ns.ThreeDMap.prototype.getImageMap = function(){
-		var imageCall;
-		if (this.dim.imgUrl){//IMAGE
-			imageCall = this.dim.imgUrl;	
-		} else {//WMS
-			imageCall = this.dim.wmsUrl+"?service=wms&version=1.3.0&request=getmap&crs="+this.dim.crs+
-				//"&WIDTH="+this.dim.demWidth*this.dim.wmsMult+"&HEIGHT="+this.dim.demHeight*this.dim.wmsMult+
-				"&WIDTH="+this.dim.imgWidth+"&HEIGHT="+this.dim.imgHeight+
-				"&bbox="+this.dim.bbox+"&layers="+this.dim.wmsLayers+"&format="+this.dim.wmsFormat+this.dim.wmsFormatMode;
-		}	
-		return imageCall;
-	};	
-	
-	ns.ThreeDMap.prototype.textureFetcher = function(image, material){
-		var loader = new THREE.TextureLoader(),
-			_this = this;
+    console.log(this.geometry)
 
-		// load a resource
-		loader.load(
-			image,
-			function ( texture ) {
-				//Texture is probably not the power of two.
-				//Avoid warning: Apply THREE.LinearFilter or THREE.NearestFilter
-				texture.minFilter = THREE.LinearFilter;
-				
-				//Set texture in material which needs updating
-				material.map = texture;
-				material.needsUpdate = true;
-			},
-			// Function called when download progresses
-			function ( xhr ) {
-				console.log( (xhr.loaded / xhr.total * 100) + '% loaded: ' + image );
-			},
-			// Function called when download errors
-			function ( xhr ) {
-				console.log( 'An error happened on texture load: ' + image );
-			}
-		);
-	};
-	
-	ns.ThreeDMap.prototype.wcsFetcher = function () {
-		var _this = this, format = this.wcsFormat,
-			isTiff = Boolean(this.wcsFormat == "geotiff"),
-			tiffArray,tiffParser;
-    	var demRequest = new XMLHttpRequest();
-		var wcsCall = this.dim.wcsUrl+"?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT="+format+"&COVERAGE="+this.dim.coverage+
-			"&bbox="+this.dim.bbox+"&CRS="+this.dim.crs+"&RESPONSE_CRS="+this.dim.crs+
-			"&WIDTH="+this.dim.demWidth+"&HEIGHT="+this.dim.demHeight;
+    this.material = this.createMaterial();
 
-		//console.log("wcsCall",wcsCall);
-    	demRequest.open('GET', wcsCall, true);
-		if (isTiff) demRequest.responseType = 'arraybuffer';
-		
-    	demRequest.onreadystatechange = function () {
-			if (this.readyState === 4) {
-				var lines;
-				//console.log(_this.wcsFormat, isTiff);
-				var minHeight=10000, maxHeight=-10000;
+    //Create Mesh and Scene
+    this.mesh = this.createMesh(this.geometry, this.material);
+    this.scene = this.createScene(this.mesh);
 
-				if (isTiff){//geotiff
-					tiffParser = new TIFFParser();
-					tiffArray = tiffParser.parseTIFF(this.response);
-					lines = tiffArray;
-				} else {//ZYZ
-					var lines= this.responseText.split("\n");
-				}
+    //Add webgl canvas to div
+    this.dim.div.appendChild(this.renderer.domElement);
 
-				//console.log(lines.length + ' ' + _this.geometry.vertices.length);				
+    //Start renderer and listen to changes in geometry
+    this.render();
 
-				//loop trought heights and calculate midHeigth
-				if (isTiff){//geotiff
-					var i = -1;
-					for (var j=0; j<lines.length; j++){
-						for (var k=0; k<lines[j].length;  k++){
-							_this.height[++i] = parseInt(lines[j][k][0]);//Number?
-							if (_this.height[i]<minHeight) minHeight = _this.height[i];
-							else if (_this.height[i]>maxHeight) maxHeight = _this.height[i];
-						}
-					}
-				} else {//XYZ
-					for (var i = 0, l = _this.geometry.vertices.length; i < l; i++) {
-						_this.height[i] = parseInt(lines[i].split(' ')[2]);
-						if (_this.height[i]<minHeight) minHeight = _this.height[i];
-						else if (_this.height[i]>maxHeight) maxHeight = _this.height[i];
-					}
-				}
-				
-				//The Vertical center of the height model is adjusted to (min + max) / 2.
-				//If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level,
-				//a tipping of the model will cause the map to disappear over the screen top without this adjustment.
-				//On a computer you can move the model down width a right-click-drag, but not on a mobile device.
-				_this.midHeight = (maxHeight + minHeight) / 2;
-				
-				//console.log(minHeight, maxHeight, _this.midHeight);
-				//console.log("vertices,zMult",_this.geometry.vertices.length,_this.dim.zMult);
-				
-				//assign vertices and adjust z values according to _this.midHeight
-				for (var i = 0, l = _this.geometry.vertices.length; i < l; i++) {
-					_this.geometry.vertices[i].z = ((_this.height[i]-_this.midHeight)/_this.dim.zMult);
-				}
-			
-				_this.geometry.loaded = true;
-   		 		_this.geometry.verticesNeedUpdate = true;
-			}
-    	};
-    	demRequest.send();
-  	};
+    //Load height model and texture asynchronously
+    this.events.fire('onTerrainLoadStart');
+    this.loadTerrain();
+    this.events.fire('onTextureLoadStart');
+    this.loadTexture(this.material);
 
-	ns.ThreeDMap.prototype.createMaterial = function(){
-		//var material = new THREE.MeshBasicMaterial({ 
-		var material = new THREE.MeshPhongMaterial({ //for shading and Ambient Light
-			//map: texture,//default=null
-			side: THREE.DoubleSide
-		});
-		material.wireframe=this.dim.wireframe;
-	
-		return material;
-	};
-  
-	ns.ThreeDMap.prototype.createMesh = function (geometry, material) {  
-		return new THREE.Mesh(geometry, material);
-	};
+    //Adust canvas if container is resized
+    window.addEventListener('resize', this.resizeMe.bind(this), false);
+};
 
-	ns.ThreeDMap.prototype.createControls = function () {
-		var controls, centerX, centerY;
-		controls = new THREE.TrackballControls(this.camera);
+ThreeDMapUntiled.prototype.createRenderer = function () {
+    var renderer = new WebGLRenderer({
+        alpha: true
+    });
+    renderer.setSize(this.dim.width, this.dim.height);
+    return renderer;
+};
 
-		return controls;
-	};
+ThreeDMapUntiled.prototype.createScene = function (mesh) {  
+    var scene = new Scene();
+    //Ambient Light for MeshPhongMaterial
+    scene.add(new AmbientLight(0xffffff));
+    scene.add(mesh);
+    return scene;
+};
 
-	ns.ThreeDMap.prototype.render = function () {
-		this.controls.update();  
-		window.requestAnimationFrame(this.render.bind(this));
-		this.renderer.render(this.scene, this.camera);
-	};
-	
-	ns.ThreeDMap.prototype.resizeMe = function(){
-    	window.clearTimeout(this.reloadTimer);
-		this.reloadTimer=window.setTimeout(this.reloadAll.bind(this),1000);
-		return;
-	};
-	
-	ns.ThreeDMap.prototype.reloadAll = function(){
-		this.dim.width = this.dim.div.clientWidth;
-		this.dim.height = this.dim.div.clientHeight;
-		//console.log(this.dim.width, this.dim.height);
-		
-		this.camera.aspect =  this.dim.width / this.dim.height;
-		this.camera.updateProjectionMatrix();
+ThreeDMapUntiled.prototype.createCamera = function () {
+    var fov = 45,
+        cameraHeight;
 
-		delete(this.controls);
-		this.controls = this.createControls();
-		this.renderer.setSize(this.dim.width, this.dim.height);
-	};
+    var camera = new PerspectiveCamera(
+        fov,
+        this.dim.width / this.dim.height,
+        0.1,
+        1000
+    );
 
-}(wxs3));
+    // Some trig to find height for camera
+    if (!!this.dim.Z) {
+        cameraHeight = this.dim.Z;
+    } else {
+        //Adapt optimal side length according to canvas
+        var sideLength;
+        var canvCoefficient = this.dim.width / this.dim.height;
+        if (canvCoefficient < (this.dim.demWidth/this.dim.demHeight)){
+            sideLength = this.dim.demWidth / canvCoefficient;
+        } else {
+            sideLength = this.dim.demHeight;
+        }
+
+        //calculate camera height
+        cameraHeight = (sideLength / 2) / Math.tan((fov / 2) * Math.PI / 180);
+    }
+
+    camera.position.set(0, 0, cameraHeight);
+    return camera;
+};
+
+ThreeDMapUntiled.prototype.createGeometry = function (){
+    return new PlaneGeometry(
+        this.dim.demWidth,
+        this.dim.demHeight,
+        this.dim.demWidth - 1,
+        this.dim.demHeight - 1
+    );
+};
+
+ThreeDMapUntiled.prototype.getImageMap = function (){
+    var imageCall;
+    if (this.dim.imgUrl) { //IMAGE
+        return this.dim.imgUrl;
+    }
+    var params = {
+        service: 'wms',
+        version: '1.3.0',
+        request: 'getMap',
+        crs: this.dim.crs,
+        WIDTH: this.dim.imgWidth,
+        HEIGHT: this.dim.imgHeight,
+        bbox: this.dim.bbox,
+        layers: this.dim.wmsLayers,
+        format: this.dim.wmsFormat + this.dim.wmsFormatMode
+    };
+    return this.dim.wmsUrl + '?' + createQueryString(params);
+};
+
+ThreeDMapUntiled.prototype.loadTexture = function (material){
+
+    var loader = new TextureLoader(),
+        image = this.getImageMap(),
+        _this = this;
+    var events = this.events;
+    // load a resource
+    loader.load(
+        image,
+        function (texture) {
+            //Texture is probably not the power of two.
+            //Avoid warning: Apply THREE.LinearFilter or THREE.NearestFilter
+            texture.minFilter = LinearFilter;
+
+            //Set texture in material which needs updating
+            material.map = texture;
+            material.needsUpdate = true;
+        },
+        // Function called when download progresses
+        function (xhr) {
+            if (xhr.loaded === xhr.total) {
+                events.fire('onTextureLoadEnd');
+            }
+        },
+        // Function called when download errors
+        function (xhr) {
+            console.log( 'An error happened on texture load: ' + image );
+        }
+    );
+};
+
+ThreeDMapUntiled.prototype.terrainLoaded = function (xhr) {
+    var isTiff = this.wcsFormat === 'geotiff';
+    var lines;
+    //console.log(_this.wcsFormat, isTiff);
+    var minHeight = 10000,
+        maxHeight = -10000;
+
+    var tiffParser, tiffArray;
+    if (isTiff){//geotiff
+        tiffParser = new TIFFParser();
+        tiffArray = tiffParser.parseTIFF(xhr.response);
+        lines = tiffArray;
+    } else {//ZYZ
+        lines = xhr.responseText.split('\n');
+    }
+
+    //loop trought heights and calculate midHeigth
+    if (isTiff) { //geotiff
+        var i = -1;
+        for (var j = 0; j < lines.length; j++){
+            for (var k = 0; k<lines[j].length;  k++){
+                this.height[++i] = parseInt(lines[j][k][0], 10);//Number?
+                if (this.height[i] < minHeight) {
+                    minHeight = this.height[i];
+                }
+                else if (this.height[i] > maxHeight) {
+                    maxHeight = this.height[i];
+                }
+            }
+        }
+    } else {//XYZ
+        for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
+            this.height[i] = parseInt(lines[i].split(' ')[2], 10);
+            if (this.height[i] < minHeight) {
+                minHeight = this.height[i];
+            }
+            else if (this.height[i] > maxHeight) {
+                maxHeight = this.height[i];
+            }
+        }
+    }
+
+    //The Vertical center of the height model is adjusted to (min + max) / 2.
+    //If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level,
+    //a tipping of the model will cause the map to disappear over the screen top without this adjustment.
+    //On a computer you can move the model down width a right-click-drag, but not on a mobile device.
+    this.midHeight = (maxHeight + minHeight) / 2;
+
+    //assign vertices and adjust z values according to _this.midHeight
+    for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
+        this.geometry.vertices[i].z = ((this.height[i] - this.midHeight) / this.dim.zMult);
+    }
+
+    this.geometry.loaded = true;
+    this.geometry.verticesNeedUpdate = true;
+    this.events.fire('onTerrainLoadEnd');
+};
+
+ThreeDMapUntiled.prototype.loadTerrain = function () {
+    var isTiff = this.wcsFormat === 'geotiff',
+        demRequest = new XMLHttpRequest(),
+        _this = this,
+        format = this.wcsFormat;
+
+    var params = {
+        SERVICE: 'WCS',
+        VERSION: '1.0.0',
+        REQUEST: 'GetCoverage',
+        COVERAGE: this.dim.coverage,
+        FORMAT: format,
+        bbox: this.dim.bbox,
+        CRS: this.dim.crs,
+        RESPONSE_CRS: this.dim.crs,
+        WIDTH: this.dim.demWidth,
+        HEIGHT: this.dim.demHeight
+    };
+
+    var wcsCall =  this.dim.wcsUrl + '?' + createQueryString(params);
+    if (isTiff) {
+        demRequest.responseType = 'arraybuffer';
+    }
+    demRequest.open('GET', wcsCall, true);
+    demRequest.onreadystatechange = function () {
+        if (this.readyState === 4) {
+            _this.terrainLoaded(this);
+        }
+    };
+    demRequest.send();
+};
+
+ThreeDMapUntiled.prototype.createMaterial = function (){
+    var material = new MeshPhongMaterial({ //for shading and Ambient Light
+        side: DoubleSide
+    });
+    material.wireframe = this.dim.wireframe;
+    return material;
+};
+
+ThreeDMapUntiled.prototype.createMesh = function (geometry, material) {  
+    return new Mesh(geometry, material);
+};
+
+ThreeDMapUntiled.prototype.createControls = function () {
+    return new TrackballControls(this._camera);
+};
+
+ThreeDMapUntiled.prototype.render = function () {
+    this.controls.update();
+    window.requestAnimationFrame(this.render.bind(this));
+    this.renderer.render(this.scene, this._camera);
+};
+
+ThreeDMapUntiled.prototype.resizeMe = function (){
+    window.clearTimeout(this.reloadTimer);
+    this.reloadTimer = window.setTimeout(this.reloadAll.bind(this), 1000);
+    return;
+};
+
+ThreeDMapUntiled.prototype.reloadAll = function (){
+    this.dim.width = this.dim.div.clientWidth;
+    this.dim.height = this.dim.div.clientHeight;
+
+    this._camera.aspect =  this.dim.width / this.dim.height;
+    this._camera.updateProjectionMatrix();
+
+    delete(this.controls);
+    this.controls = this.createControls();
+    this.renderer.setSize(this.dim.width, this.dim.height);
+};
+
+function midpoint(a, b) {
+    return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+}
+
+function thicken(a, b) {
+        var distance = Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+
+        if (distance > 0.5) {
+            var mid = midpoint(a, b);
+            var first = thicken(a, mid);
+            var last = thicken(mid, b);
+            return _.flatten([first, last]);
+        }
+        return [a, b];
+}
+
+function thickenArr(points) {
+    var p = _.map(_.range(0, points.length- 1), function (i) {
+        var a = points[i];
+        var b = points[i + 1];
+        return thicken(a, b);
+    });
+    return _.flatten(p);
+}
+
+function getZ(geometry, point) {
+    var p = _.find(geometry.vertices, function (vertex) {
+        return Math.abs(vertex.x - point.x) < 1 && Math.abs(vertex.y - point.y) < 1;
+    });
+    if (p) {
+        return p.z;
+    }
+    return 0;
+}
+
+ThreeDMapUntiled.prototype.addLine = function (line) {
+    var coordMinX = this.dim.envelope[0];
+    var coordMinY = this.dim.envelope[1];
+    var coordWidth = this.dim.envelope[2] - coordMinX;
+    var coordHeight = this.dim.envelope[3] - coordMinY;
+
+    var bbox = this.geometry.boundingBox;
+
+    var pixelMinX = bbox.min.x;
+    var pixelMinY = bbox.min.y;
+    var pixelWidth = Math.abs(bbox.max.x - pixelMinX);
+    var pixelHeight = Math.abs(bbox.max.y - pixelMinY);
+
+    var xFactor = coordWidth / pixelWidth;
+    var yFactor = coordHeight / pixelHeight;
+
+    var points = _.map(line, function (coord) {
+        var x = coord[0];
+        var pixelX = pixelMinX + ((x - coordMinX) / xFactor);
+        var y = coord[1];
+        var pixelY = pixelMinY + ((y - coordMinY) / yFactor);
+        return {x: pixelX, y: pixelY};
+    });
+    
+    var t = thickenArr(points);
+
+    var geometry = this.geometry;
+    var vertices = _.map(t, function (point) {
+        return new Vector3(point.x, point.y, getZ(geometry, point) + 1);
+    });
+
+    var material = new LineBasicMaterial({
+        color: 0x0000ff
+    });
+    var geometry = new Geometry();
+    geometry.vertices = vertices;
+    var line = new Line(geometry, material);
+    this.scene.add(line);
+};
+
+export default ThreeDMapUntiled;
