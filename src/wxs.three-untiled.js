@@ -25,8 +25,8 @@ import * as _ from 'underscore';
 import TIFFParser from './../tiff-js/tiff.js';
 
 import createQueryString from './util/createQueryString';
+import clampLineString from './clampLineString';
 
-import checkIntersect from './checkIntersect';
 
 var events = function () {
 
@@ -330,124 +330,6 @@ ThreeDMapUntiled.prototype.reloadAll = function (){
     this.controls = this.createControls();
     this.renderer.setSize(this.dim.width, this.dim.height);
 };
-
-function midpoint(a, b) {
-    return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
-}
-
-function getDistance(a, b) {
-    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-}
-
-function thicken(a, b) {
-        var distance = getDistance(a, b);
-        if (distance > 0.5) {
-            var mid = midpoint(a, b);
-            var first = thicken(a, mid);
-            var last = thicken(mid, b);
-            return _.flatten([first, last]);
-        }
-        return [a, b];
-}
-
-function thickenArr(points) {
-    var p = _.map(_.range(0, points.length- 1), function (i) {
-        var a = points[i];
-        var b = points[i + 1];
-        return thicken(a, b);
-    });
-    return _.flatten(p);
-}
-
-function getZ(geometry, point) {
-    var p = _.find(geometry.vertices, function (vertex) {
-        return Math.abs(vertex.x - point.x) < 1 && Math.abs(vertex.y - point.y) < 1;
-    });
-    if (p) {
-        return p.z;
-    }
-    return 0;
-}
-
-function lineIntersect(l1, l2) {
-    var x1 = l1[0].x;
-    var y1 = l1[0].y;
-
-    var x2 = l1[1].x;
-    var y2 = l1[1].y;
-
-    var x3 = l2[0].x;
-    var y3 = l2[0].y;
-
-    var x4 = l2[1].x;
-    var y4 = l2[1].y;
-    var ua, ub, denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
-    if (denom === 0) {
-        return null;
-    }
-    ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
-    ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
-    return {
-        x: x1 + ua*(x2 - x1),
-        y: y1 + ua*(y2 - y1),
-        z: 0/*,
-        seg1: ua >= 0 && ua <= 1,
-        seg2: ub >= 0 && ua <= 1*/
-    };
-}
-
-function calcZ(p1, p2, p3, x, y) {
-    var det = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
-    var l1 = ((p2.y - p3.y) * (x - p3.x) + (p3.x - p2.x) * (y - p3.y)) / det;
-    var l2 = ((p3.y - p1.y) * (x - p3.x) + (p1.x - p3.x) * (y - p3.y)) / det;
-    var l3 = 1.0 - l1 - l2;
-    return l1 * p1.z + l2 * p2.z + l3 * p3.z;
-}
-
-function clampLineSegment(l, geometry) {
-    return _.chain(geometry.faces)
-        .map(function (face) {
-            var a = geometry.vertices[face.a];
-            var b = geometry.vertices[face.b];
-            var c = geometry.vertices[face.c];
-
-            var line1 = [a, b];
-            var line2 = [b, c];
-            var line3 = [c, a];
-
-            var ints = [];
-            if (checkIntersect(l, line1) ) {
-                ints.push(lineIntersect(line1, l));
-            }
-            if (checkIntersect(l, line2) ) {
-                ints.push(lineIntersect(line2, l));
-            }
-            if (checkIntersect(l, line3) ) {
-                ints.push(lineIntersect(line3, l));
-            }
-            return _.map(ints, function (intersect) {
-                var z = calcZ(a, b, c, intersect.x, intersect.y);
-                return {x: intersect.x, y: intersect.y, z: z, dist: getDistance(l[0], intersect)};
-            });
-        }).
-        flatten()
-        .sortBy(function (p) {
-            return -p.dist;
-        })
-        .map(function (point) {
-            return new Vector3(point.x, point.y, point.z);
-        })
-        .value();
-}
-
-function clampLineString(line, geometry) {
-    var p = _.map(_.range(0, line.length - 1), function (i) {
-        var a = line[i];
-        var b = line[i + 1];
-        return clampLineSegment([a, b], geometry);
-    });
-    return _.flatten(p);
-}
 
 ThreeDMapUntiled.prototype.addLine = function (line) {
     var coordMinX = this.dim.envelope[0];
