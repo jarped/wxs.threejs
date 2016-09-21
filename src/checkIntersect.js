@@ -1,8 +1,6 @@
 // Given three colinear points p, q, r, the function checks if
 // point q lies on line segment 'pr'
 function onSegment(p, q, r) {
-    console.log(q.x <= Math.max(p.x, r.x))
-
     if (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
         q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y)) {
         return true;
@@ -42,18 +40,14 @@ function checkIntersect2(l1, l2) {
     var o2 = orientation(p1, q1, q2);
     var o3 = orientation(p2, q2, p1);
     var o4 = orientation(p2, q2, q1);
-    console.log(o1, o2, o3, o4)
     // General case
     if (o1 !== o2 && o3 !== o4) {
-        console.log("??")
         return true;
     }
  
     // Special Cases
     // p1, q1 and p2 are colinear and p2 lies on segment p1q1
     if (o1 === 0 && onSegment(p1, p2, q1)) {
-        console.log(p1, p2, q1);
-        console.log("!??", onSegment(p1, p2, q1))
         return true;
     };
  

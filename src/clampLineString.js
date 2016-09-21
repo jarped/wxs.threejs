@@ -49,7 +49,7 @@ function clampLineSegment(l, geometry) {
         }).
         flatten()
         .sortBy(function (p) {
-            return -p.dist;
+            return Math.abs(p.dist);
         })
         .value();
 }

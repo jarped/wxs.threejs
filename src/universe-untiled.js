@@ -1,4 +1,7 @@
+import * as _ from 'underscore';
+
 import ThreeDMapUntiled from './wxs.three-untiled.js';
+import toUtm33 from './util/toUtm33';
 
 var Dim = {
   envelope: [],
@@ -42,18 +45,18 @@ var Dim = {
     }
 
     //Bbox
-    var bbox = this.bbox.split(',');
-    //[minX, minY, maxX, maxY]
-    this.envelope = [Number(bbox[0]), Number(bbox[1]), Number(bbox[2]), Number(bbox[3])];
+    var bbox = _.map(this.bbox.split(','), parseFloat);
+    var ne = [bbox[0], bbox[1]];
+    var sw = [bbox[2], bbox[3]];
+    var ne33 = toUtm33(ne);
+    var sw33 = toUtm33(sw);
+
+    this.envelope = ne33.concat(sw33);
+
     this.metersWidth = this.envelope[2] - this.envelope[0];
     this.metersHeight = this.envelope[3] - this.envelope[1];
 
-    /*
-    //Format mode
-    if (h.getQueryVariable('WMSFORMATMODE')) {
-      this.wmsFormatMode = '; mode=' + h.getQueryVariable('WMSFORMATMODE');
-    }
-    */
+
 
     //Adjust output image to canvas if not specified
     if (!this.imgWidth || !this.imgHeight){

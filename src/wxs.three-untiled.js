@@ -18,8 +18,6 @@ import {
     Vector3
 } from 'three';
 
-
-
 import TrackballControls from 'three.trackball';
 import * as _ from 'underscore';
 import TIFFParser from './../tiff-js/tiff.js';
@@ -27,7 +25,7 @@ import TIFFParser from './../tiff-js/tiff.js';
 import createQueryString from './util/createQueryString';
 import clampLineString from './clampLineString';
 import events from './util/events';
-
+import toUtm33 from './util/toUtm33';
 
 var ThreeDMapUntiled = function (dim) {
     this.dim = dim;
@@ -141,7 +139,7 @@ ThreeDMapUntiled.prototype.getImageMap = function (){
         crs: this.dim.crs,
         WIDTH: this.dim.imgWidth,
         HEIGHT: this.dim.imgHeight,
-        bbox: this.dim.bbox,
+        bbox: this.dim.envelope.join(','),
         layers: this.dim.wmsLayers,
         format: this.dim.wmsFormat + this.dim.wmsFormatMode
     };
@@ -249,7 +247,7 @@ ThreeDMapUntiled.prototype.loadTerrain = function () {
         REQUEST: 'GetCoverage',
         COVERAGE: this.dim.coverage,
         FORMAT: format,
-        bbox: this.dim.bbox,
+        bbox: this.dim.envelope.join(','),
         CRS: this.dim.crs,
         RESPONSE_CRS: this.dim.crs,
         WIDTH: this.dim.demWidth,
@@ -322,7 +320,12 @@ function createLine(points, color) {
     return new Line(geometry, material);
 }
 
-ThreeDMapUntiled.prototype.addLine = function (linedata) {
+ThreeDMapUntiled.prototype.addLine = function (lineGeom) {
+
+    if (lineGeom.type !== 'LineString') {
+        throw new Error('Expected GeoJSON LineString geometry');
+    }
+
 
     //get envelope stuff
     var coordMinX = this.dim.envelope[0];
@@ -341,6 +344,8 @@ ThreeDMapUntiled.prototype.addLine = function (linedata) {
 
     var xFactor = coordWidth / pixelWidth;
     var yFactor = coordHeight / pixelHeight;
+
+    var linedata = _.map(lineGeom.coordinates, toUtm33);
 
     var points = _.map(linedata, function (coord) {
         var x = coord[0];
@@ -369,7 +374,6 @@ ThreeDMapUntiled.prototype._clampLines = function () {
         return;
     }
     _.each(this.linesToClamp, function (line) {
-        console.log(line);
         var clamped = clampLineString(line.geometry.vertices, this.geometry);
         this.scene.remove(line);
         this.scene.add(createLine(clamped));
