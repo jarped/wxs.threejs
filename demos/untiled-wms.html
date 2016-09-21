@@ -14,7 +14,7 @@
                 overflow:hidden;
             }
 
-            #map {
+            #threedmap {
                 margin: 0;
                 padding: 0;
                 width: 100%;
@@ -25,11 +25,11 @@
         <title>WXS.three</title>
     </head>
     <body>
-        <div id="map"></div>
+        <div id="threedmap"></div>
         <script type="text/javascript" src="../bundles/untiled.bundle.js"></script>
         <script type="text/javascript">
             var config = {
-                div: 'map',
+                div: 'threedmap',
                 //bbox: '193007.395616,6914925.418977,206822.009973,6926378.44412',
 
                 bbox: '7.856598,62.333035,8.583069,62.559503',
@@ -37,8 +37,23 @@
                 wmsLayers: 'topo2_WMS',
                 zMult: 1.5
             };
+            var config2 = {
+                div: 'threedmap',
+                bbox: '7.856598,62.333035,8.583069,62.559503',
+                wireframe: false,
+                texture: {
+                    wmsUrl: 'http://openwms.statkart.no/skwms1/wms.topo2',
+                    wmsLayers: 'topo2_WMS'
+                },
+                terrain: {
+                    wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
+                    coverage: 'land_utm33_10m'
+                }
+            };
+            var threeDMap = window.Wxs3Map(config2);
+            /*
             var threeDMap = window.WXSThree.untiled(config);
-
+            */
             threeDMap.on('onTerrainLoadStart', console.log);
             threeDMap.on('onTextureLoadStart', console.log);
 
@@ -153,6 +168,7 @@
       };
 
             threeDMap.addLine(geom);
+            //*/
         </script>
     </body>
 </html>

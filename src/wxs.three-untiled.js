@@ -40,7 +40,6 @@ ThreeDMapUntiled.prototype.init = function () {
     this.reloadTimer = -1;
     this.height = [];
     this.midHeight = null;
-    this.wcsFormat = 'geotiff'; //XYZ, geotiff
 
     this.renderer = this.createRenderer();
     this._camera =   this.createCamera();
@@ -129,8 +128,9 @@ ThreeDMapUntiled.prototype.createGeometry = function (){
 
 ThreeDMapUntiled.prototype.getImageMap = function (){
     var imageCall;
-    if (this.dim.imgUrl) { //IMAGE
-        return this.dim.imgUrl;
+    var texture = this.dim.config.texture;
+    if (texture.imgUrl) { //IMAGE
+        return texture.imgUrl;
     }
     var params = {
         service: 'wms',
@@ -140,10 +140,10 @@ ThreeDMapUntiled.prototype.getImageMap = function (){
         WIDTH: this.dim.imgWidth,
         HEIGHT: this.dim.imgHeight,
         bbox: this.dim.envelope.join(','),
-        layers: this.dim.wmsLayers,
-        format: this.dim.wmsFormat + this.dim.wmsFormatMode
+        layers: texture.wmsLayers,
+        format: texture.wmsFormat + texture.wmsFormatMode
     };
-    return this.dim.wmsUrl + '?' + createQueryString(params);
+    return texture.wmsUrl + '?' + createQueryString(params);
 };
 
 ThreeDMapUntiled.prototype.loadTexture = function (material){
@@ -178,9 +178,8 @@ ThreeDMapUntiled.prototype.loadTexture = function (material){
 };
 
 ThreeDMapUntiled.prototype.terrainLoaded = function (xhr) {
-    var isTiff = this.wcsFormat === 'geotiff';
+    var isTiff = this.dim.config.terrain.format === 'geotiff';
     var lines;
-    //console.log(_this.wcsFormat, isTiff);
     var minHeight = 10000,
         maxHeight = -10000;
 
@@ -236,17 +235,17 @@ ThreeDMapUntiled.prototype.terrainLoaded = function (xhr) {
 };
 
 ThreeDMapUntiled.prototype.loadTerrain = function () {
-    var isTiff = this.wcsFormat === 'geotiff',
+    var terrain = this.dim.config.terrain;
+    var isTiff = (terrain.format === 'geotiff'),
         demRequest = new XMLHttpRequest(),
-        _this = this,
-        format = this.wcsFormat;
+        _this = this;
 
     var params = {
         SERVICE: 'WCS',
         VERSION: '1.0.0',
         REQUEST: 'GetCoverage',
-        COVERAGE: this.dim.coverage,
-        FORMAT: format,
+        COVERAGE: terrain.coverage,
+        FORMAT: terrain.format,
         bbox: this.dim.envelope.join(','),
         CRS: this.dim.crs,
         RESPONSE_CRS: this.dim.crs,
@@ -254,7 +253,7 @@ ThreeDMapUntiled.prototype.loadTerrain = function () {
         HEIGHT: this.dim.demHeight
     };
 
-    var wcsCall =  this.dim.wcsUrl + '?' + createQueryString(params);
+    var wcsCall =  terrain.wcsUrl + '?' + createQueryString(params);
     if (isTiff) {
         demRequest.responseType = 'arraybuffer';
     }
