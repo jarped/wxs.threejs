@@ -26,31 +26,7 @@ import TIFFParser from './../tiff-js/tiff.js';
 
 import createQueryString from './util/createQueryString';
 import clampLineString from './clampLineString';
-
-
-var events = function () {
-
-    var observers = {};
-
-    return {
-        on: function (event, callback, context) {
-            if (!observers[event]) {
-                observers[event] = [];
-            }
-            if (context) {
-                callback = callback.bind(context);
-            }
-            observers[event].push(callback);
-        },
-        fire: function (event, data) {
-            if (observers[event]) {
-                _.each(observers[event], function (observer) {
-                    observer(event, data);
-                });
-            }
-        }
-    };
-};
+import events from './util/events';
 
 
 var ThreeDMapUntiled = function (dim) {
@@ -223,7 +199,7 @@ ThreeDMapUntiled.prototype.terrainLoaded = function (xhr) {
     if (isTiff) { //geotiff
         var i = -1;
         for (var j = 0; j < lines.length; j++){
-            for (var k = 0; k<lines[j].length;  k++){
+            for (var k = 0; k < lines[j].length;  k++){
                 this.height[++i] = parseInt(lines[j][k][0], 10);//Number?
                 if (this.height[i] < minHeight) {
                     minHeight = this.height[i];
