@@ -4,8 +4,6 @@ import {
     AmbientLight,
     PerspectiveCamera,
     PlaneGeometry,
-    TextureLoader,
-    LinearFilter,
     MeshPhongMaterial,
     DoubleSide,
     Mesh
@@ -27,8 +25,9 @@ import clampLineString from './clampLineString';
 import events from './util/events';
 import toUtm33 from './util/toUtm33';
 
-var ThreeDMapUntiled = function (dim) {
+var ThreeDMapUntiled = function (dim, texture) {
     this.dim = dim;
+    this.texture = texture;
     this.events = events();
 };
 
@@ -62,11 +61,17 @@ ThreeDMapUntiled.prototype.init = function () {
     this.events.fire('onTerrainLoadStart');
     this.loadTerrain();
     this.events.fire('onTextureLoadStart');
-    this.loadTexture(this.material);
+    this.texture.loadTexture(this.textureLoaded.bind(this));
 
     //Adust canvas if container is resized
     window.addEventListener('resize', this.resizeMe.bind(this), false);
-    this.on('onTextureLoadEnd', this._clampLines, this);
+    this.on('onTerrainLoadEnd', this._clampLines, this);
+};
+
+ThreeDMapUntiled.prototype.textureLoaded = function (texture) {
+    this.material.map = texture;
+    this.material.needsUpdate = true;
+    this.events.fire('onTextureLoadEnd');
 };
 
 ThreeDMapUntiled.prototype.createRenderer = function () {
@@ -123,57 +128,6 @@ ThreeDMapUntiled.prototype.createGeometry = function (){
         this.dim.demHeight,
         this.dim.demWidth - 1,
         this.dim.demHeight - 1
-    );
-};
-
-ThreeDMapUntiled.prototype.getImageMap = function (){
-    var imageCall;
-    var texture = this.dim.config.texture;
-    if (texture.imgUrl) { //IMAGE
-        return texture.imgUrl;
-    }
-    var params = {
-        service: 'wms',
-        version: '1.3.0',
-        request: 'getMap',
-        crs: this.dim.crs,
-        WIDTH: this.dim.imgWidth,
-        HEIGHT: this.dim.imgHeight,
-        bbox: this.dim.envelope.join(','),
-        layers: texture.wmsLayers,
-        format: texture.wmsFormat + texture.wmsFormatMode
-    };
-    return texture.wmsUrl + '?' + createQueryString(params);
-};
-
-ThreeDMapUntiled.prototype.loadTexture = function (material){
-
-    var loader = new TextureLoader(),
-        image = this.getImageMap(),
-        _this = this;
-    var events = this.events;
-    // load a resource
-    loader.load(
-        image,
-        function (texture) {
-            //Texture is probably not the power of two.
-            //Avoid warning: Apply THREE.LinearFilter or THREE.NearestFilter
-            texture.minFilter = LinearFilter;
-
-            //Set texture in material which needs updating
-            material.map = texture;
-            material.needsUpdate = true;
-        },
-        // Function called when download progresses
-        function (xhr) {
-            if (xhr.loaded === xhr.total) {
-                events.fire('onTextureLoadEnd');
-            }
-        },
-        // Function called when download errors
-        function (xhr) {
-            console.log( 'An error happened on texture load: ' + image );
-        }
     );
 };
 

@@ -3,6 +3,7 @@ import * as _ from 'underscore';
 import ThreeDMapUntiled from './wxs.three-untiled.js';
 import toUtm33 from './util/toUtm33';
 
+import Texture from './Texture';
 
 var defaults = {
     div: 'map',
@@ -35,12 +36,17 @@ function extendDefaults(config) {
     return confExtended;
 };
 
+function Terrain(terrainConfig) {
+
+}
+
+
+
 function Dimensions(config) {
 
     var div = document.getElementById(config.div);
     var width = div.clientWidth;
     var height = div.clientHeight;
-    console.log(config);
 
     var bbox = _.map(config.bbox.split(','), parseFloat);
     var ne = [bbox[0], bbox[1]];
@@ -83,7 +89,7 @@ function Dimensions(config) {
 
     // mapunits between vertexes in y-dimention
     var proportionHeight = metersHeight / demHeight;
-    
+
     // average mapunits between vertexes
     var proportionAverage = ((proportionWidth + proportionHeight) / 2); 
     
@@ -116,7 +122,9 @@ function Dimensions(config) {
 
 function Wxs3Map(config) {
     config = extendDefaults(config || {});
-    return new ThreeDMapUntiled(Dimensions(config));
+    var dimensions = Dimensions(config);
+    var texture = Texture(config.texture, dimensions);
+    return new ThreeDMapUntiled(dimensions, texture);
 }
 
 window.Wxs3Map = Wxs3Map;
