@@ -41,7 +41,7 @@ function clampLineSegment(l, geometry) {
                 var z = calcZ(a, b, c, intersect.x, intersect.y);
                 return {
                     x: intersect.x,
-                    y: intersect.y, 
+                    y: intersect.y,
                     z: z + 0.01,
                     dist: getDistance(l[0], intersect)
                 };
@@ -50,9 +50,6 @@ function clampLineSegment(l, geometry) {
         flatten()
         .sortBy(function (p) {
             return -p.dist;
-        })
-        .map(function (point) {
-            return new Vector3(point.x, point.y, point.z);
         })
         .value();
 }
