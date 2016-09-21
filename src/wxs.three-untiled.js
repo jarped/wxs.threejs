@@ -25,8 +25,9 @@ import clampLineString from './clampLineString';
 import events from './util/events';
 import toUtm33 from './util/toUtm33';
 
-var ThreeDMapUntiled = function (dim, texture) {
+var ThreeDMapUntiled = function (dim, terrain, texture) {
     this.dim = dim;
+    this.terrain = terrain;
     this.texture = texture;
     this.events = events();
 };
@@ -59,13 +60,23 @@ ThreeDMapUntiled.prototype.init = function () {
 
     //Load height model and texture asynchronously
     this.events.fire('onTerrainLoadStart');
-    this.loadTerrain();
+    //this.loadTerrain();
+    this.terrain.loadTerrain(this.geometry.vertices.length, this.terrainLoaded.bind(this));
     this.events.fire('onTextureLoadStart');
     this.texture.loadTexture(this.textureLoaded.bind(this));
 
     //Adust canvas if container is resized
     window.addEventListener('resize', this.resizeMe.bind(this), false);
     this.on('onTerrainLoadEnd', this._clampLines, this);
+};
+
+ThreeDMapUntiled.prototype.terrainLoaded = function (data) {
+    for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
+        this.geometry.vertices[i].z = ((data.height[i] - data.midHeight) / this.dim.zMult);
+    }
+    this.geometry.loaded = true;
+    this.geometry.verticesNeedUpdate = true;
+    this.events.fire('onTerrainLoadEnd');
 };
 
 ThreeDMapUntiled.prototype.textureLoaded = function (texture) {
@@ -129,95 +140,6 @@ ThreeDMapUntiled.prototype.createGeometry = function (){
         this.dim.demWidth - 1,
         this.dim.demHeight - 1
     );
-};
-
-ThreeDMapUntiled.prototype.terrainLoaded = function (xhr) {
-    var isTiff = this.dim.config.terrain.format === 'geotiff';
-    var lines;
-    var minHeight = 10000,
-        maxHeight = -10000;
-
-    var tiffParser, tiffArray;
-    if (isTiff){//geotiff
-        tiffParser = new TIFFParser();
-        tiffArray = tiffParser.parseTIFF(xhr.response);
-        lines = tiffArray;
-    } else {//ZYZ
-        lines = xhr.responseText.split('\n');
-    }
-
-    //loop trought heights and calculate midHeigth
-    if (isTiff) { //geotiff
-        var i = -1;
-        for (var j = 0; j < lines.length; j++){
-            for (var k = 0; k < lines[j].length;  k++){
-                this.height[++i] = parseInt(lines[j][k][0], 10);//Number?
-                if (this.height[i] < minHeight) {
-                    minHeight = this.height[i];
-                }
-                else if (this.height[i] > maxHeight) {
-                    maxHeight = this.height[i];
-                }
-            }
-        }
-    } else {//XYZ
-        for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
-            this.height[i] = parseInt(lines[i].split(' ')[2], 10);
-            if (this.height[i] < minHeight) {
-                minHeight = this.height[i];
-            }
-            else if (this.height[i] > maxHeight) {
-                maxHeight = this.height[i];
-            }
-        }
-    }
-
-    //The Vertical center of the height model is adjusted to (min + max) / 2.
-    //If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level,
-    //a tipping of the model will cause the map to disappear over the screen top without this adjustment.
-    //On a computer you can move the model down width a right-click-drag, but not on a mobile device.
-    this.midHeight = (maxHeight + minHeight) / 2;
-
-    //assign vertices and adjust z values according to _this.midHeight
-    for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
-        this.geometry.vertices[i].z = ((this.height[i] - this.midHeight) / this.dim.zMult);
-    }
-
-    this.geometry.loaded = true;
-    this.geometry.verticesNeedUpdate = true;
-    this.events.fire('onTerrainLoadEnd');
-};
-
-ThreeDMapUntiled.prototype.loadTerrain = function () {
-    var terrain = this.dim.config.terrain;
-    var isTiff = (terrain.format === 'geotiff'),
-        demRequest = new XMLHttpRequest(),
-        _this = this;
-
-    var params = {
-        SERVICE: 'WCS',
-        VERSION: '1.0.0',
-        REQUEST: 'GetCoverage',
-        COVERAGE: terrain.coverage,
-        FORMAT: terrain.format,
-        bbox: this.dim.envelope.join(','),
-        CRS: this.dim.crs,
-        RESPONSE_CRS: this.dim.crs,
-        WIDTH: this.dim.demWidth,
-        HEIGHT: this.dim.demHeight
-    };
-
-    var wcsCall =  terrain.wcsUrl + '?' + createQueryString(params);
-    if (isTiff) {
-        demRequest.responseType = 'arraybuffer';
-    }
-    demRequest.open('GET', wcsCall, true);
-    demRequest.onreadystatechange = function () {
-        if (this.readyState === 4) {
-            _this.terrainLoaded(this);
-        }
-    };
-    demRequest.send();
 };
 
 ThreeDMapUntiled.prototype.createMaterial = function (){

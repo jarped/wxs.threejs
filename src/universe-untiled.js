@@ -4,6 +4,7 @@ import ThreeDMapUntiled from './wxs.three-untiled.js';
 import toUtm33 from './util/toUtm33';
 
 import Texture from './Texture';
+import Terrain from './Terrain';
 
 var defaults = {
     div: 'map',
@@ -35,12 +36,6 @@ function extendDefaults(config) {
     confExtended.terrain = terrain;
     return confExtended;
 };
-
-function Terrain(terrainConfig) {
-
-}
-
-
 
 function Dimensions(config) {
 
@@ -111,8 +106,6 @@ function Dimensions(config) {
         height: height,
         imgWidth: imgWidth,
         imgHeight: imgHeight,
-        metersWidth: metersWidth,
-        metersHeight: metersHeight,
         demWidth: demWidth,
         demHeight: demHeight,
         zMult: zMult,
@@ -124,7 +117,8 @@ function Wxs3Map(config) {
     config = extendDefaults(config || {});
     var dimensions = Dimensions(config);
     var texture = Texture(config.texture, dimensions);
-    return new ThreeDMapUntiled(dimensions, texture);
+    var terrain = Terrain(config.terrain, dimensions);
+    return new ThreeDMapUntiled(dimensions, terrain, texture);
 }
 
 window.Wxs3Map = Wxs3Map;
