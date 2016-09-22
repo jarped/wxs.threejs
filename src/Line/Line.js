@@ -38,10 +38,8 @@ function ALine(lineGeom, style, geometry, envelope) {
         }
 
         //get envelope stuff
-        var coordMinX = envelope[0];
-        var coordMinY = envelope[1];
-        var coordWidth = envelope[2] - coordMinX;
-        var coordHeight = envelope[3] - coordMinY;
+        var coordMinX = envelope.minX();
+        var coordMinY = envelope.minY();
 
         //get the bbox of the geometry
         geometry.computeBoundingBox();
@@ -52,8 +50,8 @@ function ALine(lineGeom, style, geometry, envelope) {
         var pixelWidth = Math.abs(bbox.max.x - pixelMinX);
         var pixelHeight = Math.abs(bbox.max.y - pixelMinY);
 
-        var xFactor = coordWidth / pixelWidth;
-        var yFactor = coordHeight / pixelHeight;
+        var xFactor = envelope.width() / pixelWidth;
+        var yFactor = envelope.height() / pixelHeight;
 
         var linedata = _.map(lineGeom.coordinates, toUtm33);
 

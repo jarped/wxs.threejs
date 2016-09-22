@@ -1,10 +1,11 @@
 import * as _ from 'underscore';
 
 import ThreeDMapUntiled from './ThreeDMapUntiled';
-import toUtm33 from './util/toUtm33';
+
 
 import Texture from './Texture';
 import Terrain from './Terrain';
+import Envelope from './Envelope';
 
 var defaults = {
     div: 'map',
@@ -43,6 +44,9 @@ function Dimensions(config) {
     var width = div.clientWidth;
     var height = div.clientHeight;
 
+    var envelope = Envelope(config.bbox);
+
+    /*
     var bbox = _.map(config.bbox.split(','), parseFloat);
     var ne = [bbox[0], bbox[1]];
     var sw = [bbox[2], bbox[3]];
@@ -50,8 +54,9 @@ function Dimensions(config) {
     var sw33 = toUtm33(sw);
 
     var envelope = ne33.concat(sw33);
-    var metersWidth = envelope[2] - envelope[0];
-    var metersHeight = envelope[3] - envelope[1];
+    */
+    var metersWidth = envelope.width();
+    var metersHeight = envelope.height();
 
     //Adjust output image to canvas if not specified
     var imgWidth, imgHeight;

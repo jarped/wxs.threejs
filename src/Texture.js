@@ -19,7 +19,7 @@ function Texture(textureConfig, dim) {
             crs: dim.crs,
             WIDTH: dim.imgWidth,
             HEIGHT: dim.imgHeight,
-            bbox: dim.envelope.join(','),
+            bbox: dim.envelope.bbox(),
             layers: textureConfig.wmsLayers,
             format: textureConfig.wmsFormat + textureConfig.wmsFormatMode
         };

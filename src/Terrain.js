@@ -89,7 +89,7 @@ var Terrain = function (terrainConfig, dim) {
             REQUEST: 'GetCoverage',
             COVERAGE: terrainConfig.coverage,
             FORMAT: terrainConfig.format,
-            bbox: dim.envelope.join(','),
+            bbox: dim.envelope.bbox(),
             CRS: dim.crs,
             RESPONSE_CRS: dim.crs,
             WIDTH: dim.demWidth,
