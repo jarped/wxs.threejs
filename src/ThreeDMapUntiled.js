@@ -37,7 +37,7 @@ ThreeDMapUntiled.prototype.init = function () {
     this.linesToClamp = [];
 
     this.renderer = this.createRenderer();
-    this._camera =   this.createCamera();
+    this._camera = this.createCamera();
     this.controls = this.createControls();
     this.geometry = this.createGeometry();
 
@@ -88,7 +88,7 @@ ThreeDMapUntiled.prototype.createRenderer = function () {
     return renderer;
 };
 
-ThreeDMapUntiled.prototype.createScene = function (mesh) {  
+ThreeDMapUntiled.prototype.createScene = function (mesh) {
     var scene = new Scene();
     //Ambient Light for MeshPhongMaterial
     scene.add(new AmbientLight(0xffffff));
@@ -114,7 +114,7 @@ ThreeDMapUntiled.prototype.createCamera = function () {
         //Adapt optimal side length according to canvas
         var sideLength;
         var canvCoefficient = this.dim.width / this.dim.height;
-        if (canvCoefficient < (this.dim.demWidth/this.dim.demHeight)){
+        if (canvCoefficient < (this.dim.demWidth / this.dim.demHeight)) {
             sideLength = this.dim.demWidth / canvCoefficient;
         } else {
             sideLength = this.dim.demHeight;
@@ -128,7 +128,7 @@ ThreeDMapUntiled.prototype.createCamera = function () {
     return camera;
 };
 
-ThreeDMapUntiled.prototype.createGeometry = function (){
+ThreeDMapUntiled.prototype.createGeometry = function () {
     return new PlaneGeometry(
         this.dim.demWidth,
         this.dim.demHeight,
@@ -137,7 +137,7 @@ ThreeDMapUntiled.prototype.createGeometry = function (){
     );
 };
 
-ThreeDMapUntiled.prototype.createMaterial = function (){
+ThreeDMapUntiled.prototype.createMaterial = function () {
     var material = new MeshPhongMaterial({ //for shading and Ambient Light
         side: DoubleSide
     });
@@ -159,17 +159,17 @@ ThreeDMapUntiled.prototype.render = function () {
     this.renderer.render(this.scene, this._camera);
 };
 
-ThreeDMapUntiled.prototype.resizeMe = function (){
+ThreeDMapUntiled.prototype.resizeMe = function () {
     window.clearTimeout(this.reloadTimer);
     this.reloadTimer = window.setTimeout(this.reloadAll.bind(this), 1000);
     return;
 };
 
-ThreeDMapUntiled.prototype.reloadAll = function (){
+ThreeDMapUntiled.prototype.reloadAll = function () {
     this.dim.width = this.dim.div.clientWidth;
     this.dim.height = this.dim.div.clientHeight;
 
-    this._camera.aspect =  this.dim.width / this.dim.height;
+    this._camera.aspect = this.dim.width / this.dim.height;
     this._camera.updateProjectionMatrix();
 
     delete(this.controls);

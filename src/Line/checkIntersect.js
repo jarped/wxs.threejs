@@ -7,7 +7,7 @@ function onSegment(p, q, r) {
     }
     return false;
 }
- 
+
 // To find orientation of ordered triplet (p, q, r).
 // The function returns following values
 // 0 --> p, q and r are colinear
@@ -17,13 +17,13 @@ function orientation(p, q, r) {
     // See http://www.geeksforgeeks.org/orientation-3-ordered-points/
     // for details of below formula.
     var val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
- 
+
     if (val === 0) {
         return 0;  // colinear
     }
-    return (val > 0) ? 1: 2; // clock or counterclock wise
+    return (val > 0) ? 1 : 2; // clock or counterclock wise
 }
- 
+
 // The main function that returns true if line segment 'p1q1'
 // and 'p2q2' intersect.
 function checkIntersect2(l1, l2) {
@@ -44,18 +44,18 @@ function checkIntersect2(l1, l2) {
     if (o1 !== o2 && o3 !== o4) {
         return true;
     }
- 
+
     // Special Cases
     // p1, q1 and p2 are colinear and p2 lies on segment p1q1
     if (o1 === 0 && onSegment(p1, p2, q1)) {
         return true;
     };
- 
+
     // p1, q1 and p2 are colinear and q2 lies on segment p1q1
     if (o2 === 0 && onSegment(p1, q2, q1)) {
         return true;
     }
- 
+
     // p2, q2 and p1 are colinear and p1 lies on segment p2q2
     if (o3 === 0 && onSegment(p2, p1, q2)) {
         return true;
@@ -64,16 +64,16 @@ function checkIntersect2(l1, l2) {
     if (o4 === 0 && onSegment(p2, q1, q2)) {
         return true;
     }
- 
+
     return false; // Doesn't fall in any of the above cases
 }
 
 function Turn(p1, p2, p3) {
-  var a = p1.x; 
-  var b = p1.y; 
-  var c = p2.x; 
+  var a = p1.x;
+  var b = p1.y;
+  var c = p2.x;
   var d = p2.y;
-  var e = p3.x; 
+  var e = p3.x;
   var f = p3.y;
   var A = (f - b) * (c - a);
   var B = (d - b) * (e - a);
@@ -85,7 +85,7 @@ function checkIntersect(l1, l2) {
     var p2 = l1[1];
     var p3 = l2[0];
     var p4 = l2[1];
-  return (Turn(p1, p3, p4) != Turn(p2, p3, p4)) && (Turn(p1, p2, p3) != Turn(p1, p2, p4));
+  return (Turn(p1, p3, p4) !== Turn(p2, p3, p4)) && (Turn(p1, p2, p3) !== Turn(p1, p2, p4));
 }
 
 export default checkIntersect;

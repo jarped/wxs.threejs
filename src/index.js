@@ -22,7 +22,7 @@ var defaults = {
     terrain: {
         pixelsPerVertex: 8, //the resolution of the height model in the image
         wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
-        wcsResolution: 10, //resolution of grid cell in meters        
+        wcsResolution: 10, //resolution of grid cell in meters
         coverage: 'land_utm33_10m',
         format: 'geotiff'
     }
@@ -55,9 +55,9 @@ function Dimensions(config) {
 
     //Adjust output image to canvas if not specified
     var imgWidth, imgHeight;
-    if (!config.texture.imgWidth || !config.texture.imgHeight){
+    if (!config.texture.imgWidth || !config.texture.imgHeight) {
         var imgCoefficient = metersWidth / metersHeight;
-        if ((width / height) < imgCoefficient){
+        if ((width / height) < imgCoefficient) {
             imgWidth = width;
             imgHeight = Math.round(imgWidth / imgCoefficient);
         } else {
@@ -70,10 +70,10 @@ function Dimensions(config) {
     }
 
     //Compute the resolution of the height model in the image (pixelsPerVertex)
-    var demWidth = Math.round(imgWidth /  config.terrain.pixelsPerVertex);
+    var demWidth = Math.round(imgWidth / config.terrain.pixelsPerVertex);
     var demHeight = Math.round(imgHeight / config.terrain.pixelsPerVertex);
 
-    if (demWidth > metersWidth / config.terrain.wcsResolution){
+    if (demWidth > metersWidth / config.terrain.wcsResolution) {
         //ajust to avoid stairs in the model - reduce dem to actual resolution
         demWidth = Math.round(metersWidth / config.terrain.wcsResolution);
         demHeight = Math.round(metersHeight / config.terrain.wcsResolution);
@@ -86,8 +86,8 @@ function Dimensions(config) {
     var proportionHeight = metersHeight / demHeight;
 
     // average mapunits between vertexes
-    var proportionAverage = ((proportionWidth + proportionHeight) / 2); 
-    
+    var proportionAverage = ((proportionWidth + proportionHeight) / 2);
+
     if (config.zInv) {
         proportionAverage = proportionAverage * -1;
     }

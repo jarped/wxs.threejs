@@ -1,8 +1,5 @@
 {
     "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
         "sourceType": "module"
     },
     "env": {
@@ -12,6 +9,12 @@
     },
     "rules": {
         "eqeqeq": 2,
+        "no-multi-spaces": 2,
+        "no-mixed-spaces-and-tabs": 2,
+        "no-trailing-spaces": 2,
+        "space-infix-ops": 2,
+        "space-before-blocks":2,
+        "keyword-spacing": [2, {"before": true, "after": true}],
         "quotes": [2, "single"],
         "comma-dangle": [2, "never"],
         "strict": [2, "global"],
@@ -24,6 +27,7 @@
         "max-len": [1, 100, 4],
         "semi": [2, "always"],
         "no-undef": 2,
-        "radix": 2
+        "radix": 2,
+        "brace-style": 2
     }
 }

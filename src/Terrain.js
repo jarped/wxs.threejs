@@ -12,11 +12,11 @@ var Terrain = function (terrainConfig, dim) {
             maxHeight = -10000;
 
         var tiffParser, tiffArray;
-        if (isTiff){//geotiff
+        if (isTiff) {
             tiffParser = new TIFFParser();
             tiffArray = tiffParser.parseTIFF(xhr.response);
             lines = tiffArray;
-        } else {//ZYZ
+        } else { //assume ZYZ
             lines = xhr.responseText.split('\n');
         }
 
@@ -24,13 +24,12 @@ var Terrain = function (terrainConfig, dim) {
         //loop trought heights and calculate midHeigth
         if (isTiff) { //geotiff
             var i = -1;
-            for (var j = 0; j < lines.length; j++){
-                for (var k = 0; k < lines[j].length;  k++){
-                    height[++i] = parseInt(lines[j][k][0], 10);//Number?
+            for (var j = 0; j < lines.length; j++) {
+                for (var k = 0; k < lines[j].length; k++) {
+                    height[++i] = parseInt(lines[j][k][0], 10);
                     if (height[i] < minHeight) {
                         minHeight = height[i];
-                    }
-                    else if (height[i] > maxHeight) {
+                    } else if (height[i] > maxHeight) {
                         maxHeight = height[i];
                     }
                 }
@@ -40,8 +39,7 @@ var Terrain = function (terrainConfig, dim) {
                 height[i] = parseInt(lines[i].split(' ')[2], 10);
                 if (height[i] < minHeight) {
                     minHeight = height[i];
-                }
-                else if (height[i] > maxHeight) {
+                } else if (height[i] > maxHeight) {
                     maxHeight = height[i];
                 }
             }
@@ -49,24 +47,16 @@ var Terrain = function (terrainConfig, dim) {
 
         //The Vertical center of the height model is adjusted to (min + max) / 2.
         //If the map covers an area of high altitudes (i.e. Galdhøpiggen) above sea level,
-        //a tipping of the model will cause the map to disappear over the screen top without this adjustment.
-        //On a computer you can move the model down width a right-click-drag, but not on a mobile device.
+        //a tipping of the model will cause the map to disappear over the screen top without this
+        //adjustment.
+        //On a computer you can move the model down width a right-click-drag,
+        //but not on a mobile device.
         var midHeight = (maxHeight + minHeight) / 2;
 
         return {
             height: height,
             midHeight: midHeight
         };
-        /*
-        //assign vertices and adjust z values according to _this.midHeight
-        for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
-            this.geometry.vertices[i].z = ((this.height[i] - this.midHeight) / this.dim.zMult);
-        }
-
-        this.geometry.loaded = true;
-        this.geometry.verticesNeedUpdate = true;
-        this.events.fire('onTerrainLoadEnd');
-        */
     };
 
     function loadTerrain(numVertices, callback) {
@@ -86,7 +76,7 @@ var Terrain = function (terrainConfig, dim) {
             HEIGHT: dim.demHeight
         };
 
-        var wcsCall =  terrainConfig.wcsUrl + '?' + createQueryString(params);
+        var wcsCall = terrainConfig.wcsUrl + '?' + createQueryString(params);
         if (isTiff) {
             demRequest.responseType = 'arraybuffer';
         }
