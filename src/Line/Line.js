@@ -6,7 +6,7 @@ import {
     Vector3
 } from 'three';
 
-import clampLineString from '../clampLineString';
+import clampLineString from './clampLineString';
 import toUtm33 from '../util/toUtm33';
 
 function ALine(lineGeom, style, geometry, envelope) {
