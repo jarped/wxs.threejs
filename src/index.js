@@ -1,6 +1,6 @@
 import * as _ from 'underscore';
 
-import ThreeDMapUntiled from './wxs.three-untiled.js';
+import ThreeDMapUntiled from './ThreeDMapUntiled';
 import toUtm33 from './util/toUtm33';
 
 import Texture from './Texture';

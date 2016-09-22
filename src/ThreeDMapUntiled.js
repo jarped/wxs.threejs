@@ -9,21 +9,15 @@ import {
     Mesh
 } from 'three';
 
-import {
-    Line,
-    LineBasicMaterial,
-    Geometry,
-    Vector3
-} from 'three';
 
 import TrackballControls from 'three.trackball';
 import * as _ from 'underscore';
 import TIFFParser from './../tiff-js/tiff.js';
 
 import createQueryString from './util/createQueryString';
-import clampLineString from './clampLineString';
+
 import events from './util/events';
-import toUtm33 from './util/toUtm33';
+import Line from './Line/Line';
 
 var ThreeDMapUntiled = function (dim, terrain, texture) {
     this.dim = dim;
@@ -40,6 +34,7 @@ ThreeDMapUntiled.prototype.init = function () {
     this.reloadTimer = -1;
     this.height = [];
     this.midHeight = null;
+    this.linesToClamp = [];
 
     this.renderer = this.createRenderer();
     this._camera =   this.createCamera();
@@ -150,7 +145,7 @@ ThreeDMapUntiled.prototype.createMaterial = function (){
     return material;
 };
 
-ThreeDMapUntiled.prototype.createMesh = function (geometry, material) {  
+ThreeDMapUntiled.prototype.createMesh = function (geometry, material) {
     return new Mesh(geometry, material);
 };
 
@@ -182,76 +177,22 @@ ThreeDMapUntiled.prototype.reloadAll = function (){
     this.renderer.setSize(this.dim.width, this.dim.height);
 };
 
-function createLine(points, color) {
-    var vertices = _.map(points, function (point) {
-        return new Vector3(point.x, point.y, point.z);
-    });
 
-    var material = new LineBasicMaterial({
-        color: color || 0x0000ff
-    });
-    var geometry = new Geometry();
-    geometry.vertices = vertices;
-    return new Line(geometry, material);
-}
-
-ThreeDMapUntiled.prototype.addLine = function (lineGeom) {
-
-    if (lineGeom.type !== 'LineString') {
-        throw new Error('Expected GeoJSON LineString geometry');
-    }
-
-
-    //get envelope stuff
-    var coordMinX = this.dim.envelope[0];
-    var coordMinY = this.dim.envelope[1];
-    var coordWidth = this.dim.envelope[2] - coordMinX;
-    var coordHeight = this.dim.envelope[3] - coordMinY;
-
-    //get the bbox of the geometry
-    this.geometry.computeBoundingBox();
-    var bbox = this.geometry.boundingBox;
-
-    var pixelMinX = bbox.min.x;
-    var pixelMinY = bbox.min.y;
-    var pixelWidth = Math.abs(bbox.max.x - pixelMinX);
-    var pixelHeight = Math.abs(bbox.max.y - pixelMinY);
-
-    var xFactor = coordWidth / pixelWidth;
-    var yFactor = coordHeight / pixelHeight;
-
-    var linedata = _.map(lineGeom.coordinates, toUtm33);
-
-    var points = _.map(linedata, function (coord) {
-        var x = coord[0];
-        var pixelX = pixelMinX + ((x - coordMinX) / xFactor);
-        var y = coord[1];
-        var pixelY = pixelMinY + ((y - coordMinY) / yFactor);
-        return {x: pixelX, y: pixelY, z: 0};
-    });
-
-    if (this.geometry.loaded) {
-        points = clampLineString(points, this.geometry);
-    }
-    var line = createLine(points);
-    this.scene.add(line);
-
-    if (!this.geometry.loaded) {
-        if (!this.linesToClamp) {
-            this.linesToClamp = [];
-        }
+ThreeDMapUntiled.prototype.addLine = function (lineGeom, lineStyle) {
+    var line = Line(lineGeom, lineStyle, this.geometry, this.dim.envelope);
+    var threeLine = line.getThreeLine();
+    this.scene.add(threeLine);
+    if (line.needsClamp()) {
         this.linesToClamp.push(line);
     }
 };
 
 ThreeDMapUntiled.prototype._clampLines = function () {
-    if (!this.linesToClamp) {
-        return;
-    }
     _.each(this.linesToClamp, function (line) {
-        var clamped = clampLineString(line.geometry.vertices, this.geometry);
-        this.scene.remove(line);
-        this.scene.add(createLine(clamped));
+        var oldLine = line.getThreeLine();
+        var clamped = line.clamp();
+        this.scene.remove(oldLine);
+        this.scene.add(clamped);
     }, this);
     this.linesToClamp = [];
 };

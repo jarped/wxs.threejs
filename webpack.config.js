@@ -2,7 +2,7 @@ var path = require('path');
 
 module.exports = {
     entry: {
-        untiled: './src/universe-untiled.js'
+        Wxs3Map: './src/index.js'
     },
     output: {
         path: path.join(__dirname, 'bundles'),
@@ -22,7 +22,8 @@ module.exports = {
                 query: {
                     presets: ['es2015']
                 }
-            }
+            },
+            {test: /\.json$/, loader: 'json-loader'}
         ]
     }
 };
