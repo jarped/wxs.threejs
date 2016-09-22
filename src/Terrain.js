@@ -1,3 +1,5 @@
+import {PlaneGeometry} from 'three';
+
 import TIFFParser from './../tiff-js/tiff.js';
 
 import createQueryString from './util/createQueryString';
@@ -5,11 +7,13 @@ import createQueryString from './util/createQueryString';
 var Terrain = function (terrainConfig, dim) {
 
     var isTiff = (terrainConfig.format === 'geotiff');
+    var geometry;
 
-    function _parseHeights(xhr, numVertices) {
+    function _parseHeights(xhr) {
         var lines;
         var minHeight = 10000,
-            maxHeight = -10000;
+            maxHeight = -10000,
+            numVertices = geometry.vertices.length;
 
         var tiffParser, tiffArray;
         if (isTiff) {
@@ -59,8 +63,24 @@ var Terrain = function (terrainConfig, dim) {
         };
     };
 
-    function loadTerrain(numVertices, callback) {
-        //var terrain = this.dim.config.terrain;
+    function _createGeometry() {
+        geometry = new PlaneGeometry(
+            dim.demWidth,
+            dim.demHeight,
+            dim.demWidth - 1,
+            dim.demHeight - 1
+        );
+    };
+
+    function _terrainLoaded(data) {
+        for (var i = 0, l = geometry.vertices.length; i < l; i++) {
+            geometry.vertices[i].z = ((data.height[i] - data.midHeight) / dim.zMult);
+        }
+        geometry.loaded = true;
+        geometry.verticesNeedUpdate = true;
+    }
+
+    function loadTerrain(callback) {
         var demRequest = new XMLHttpRequest();
 
         var params = {
@@ -83,14 +103,20 @@ var Terrain = function (terrainConfig, dim) {
         demRequest.open('GET', wcsCall, true);
         demRequest.onreadystatechange = function () {
             if (this.readyState === 4) {
-                callback(_parseHeights(this, numVertices));
+                _terrainLoaded(_parseHeights(this));
+                callback();
             }
         };
         demRequest.send();
     };
 
+    _createGeometry();
+
     return {
-        loadTerrain: loadTerrain
+        loadTerrain: loadTerrain,
+        getGeometry: function getGeometry() {
+            return geometry;
+        }
     };
 };
 

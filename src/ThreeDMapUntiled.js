@@ -8,14 +8,11 @@ import {
     DoubleSide,
     Mesh
 } from 'three';
-
-
 import TrackballControls from 'three.trackball';
 import * as _ from 'underscore';
+
 import TIFFParser from './../tiff-js/tiff.js';
-
 import createQueryString from './util/createQueryString';
-
 import events from './util/events';
 import Line from './Line/Line';
 
@@ -24,63 +21,53 @@ var ThreeDMapUntiled = function (dim, terrain, texture) {
     this.terrain = terrain;
     this.texture = texture;
     this.events = events();
+
+    this.reloadTimer = -1;
+
+    this.linesToClamp = [];
+
+    this._renderer = this._createRenderer();
+    this._camera = this._createCamera();
+    this._controls = this._createControls();
+    this._material = this._createMaterial();
+
+    //Create Mesh and Scene
+    var mesh = this._createMesh();
+    this._scene = this._createScene(mesh);
+
+    //Add webgl canvas to div
+    this.dim.div.appendChild(this._renderer.domElement);
+
+    //Start renderer and listen to changes in geometry
+    this._render();
+
+    //Load height model and texture asynchronously
+    this.events.fire('onTerrainLoadStart');
+    this.terrain.loadTerrain(this._terrainLoaded.bind(this));
+
+    this.events.fire('onTextureLoadStart');
+    this.texture.loadTexture(this._textureLoaded.bind(this));
+
+    //Adust canvas if container is resized
+    window.addEventListener('resize', this._resizeMe.bind(this), false);
+    this.on('onTerrainLoadEnd', this._clampLines, this);
 };
 
 ThreeDMapUntiled.prototype.on = function (event, callback, context) {
     this.events.on(event, callback, context);
 };
 
-ThreeDMapUntiled.prototype.init = function () {
-    this.reloadTimer = -1;
-    this.height = [];
-    this.midHeight = null;
-    this.linesToClamp = [];
-
-    this.renderer = this.createRenderer();
-    this._camera = this.createCamera();
-    this.controls = this.createControls();
-    this.geometry = this.createGeometry();
-
-    this.material = this.createMaterial();
-
-    //Create Mesh and Scene
-    this.mesh = this.createMesh(this.geometry, this.material);
-    this.scene = this.createScene(this.mesh);
-
-    //Add webgl canvas to div
-    this.dim.div.appendChild(this.renderer.domElement);
-
-    //Start renderer and listen to changes in geometry
-    this.render();
-
-    //Load height model and texture asynchronously
-    this.events.fire('onTerrainLoadStart');
-    //this.loadTerrain();
-    this.terrain.loadTerrain(this.geometry.vertices.length, this.terrainLoaded.bind(this));
-    this.events.fire('onTextureLoadStart');
-    this.texture.loadTexture(this.textureLoaded.bind(this));
-
-    //Adust canvas if container is resized
-    window.addEventListener('resize', this.resizeMe.bind(this), false);
-    this.on('onTerrainLoadEnd', this._clampLines, this);
-};
-
-ThreeDMapUntiled.prototype.terrainLoaded = function (data) {
-    for (var i = 0, l = this.geometry.vertices.length; i < l; i++) {
-        this.geometry.vertices[i].z = ((data.height[i] - data.midHeight) / this.dim.zMult);
-    }
-    this.geometry.loaded = true;
-    this.geometry.verticesNeedUpdate = true;
+ThreeDMapUntiled.prototype._terrainLoaded = function () {
     this.events.fire('onTerrainLoadEnd');
 };
 
-ThreeDMapUntiled.prototype.textureLoaded = function (texture) {
-    this.material.map = texture;
-    this.material.needsUpdate = true;
+ThreeDMapUntiled.prototype._textureLoaded = function (texture) {
+    this._material.map = texture;
+    this._material.needsUpdate = true;
     this.events.fire('onTextureLoadEnd');
 };
 
-ThreeDMapUntiled.prototype.createRenderer = function () {
+ThreeDMapUntiled.prototype._createRenderer = function () {
     var renderer = new WebGLRenderer({
         alpha: true
     });
@@ -88,7 +75,7 @@ ThreeDMapUntiled.prototype.createRenderer = function () {
     return renderer;
 };
 
-ThreeDMapUntiled.prototype.createScene = function (mesh) {
+ThreeDMapUntiled.prototype._createScene = function (mesh) {
     var scene = new Scene();
     //Ambient Light for MeshPhongMaterial
     scene.add(new AmbientLight(0xffffff));
@@ -96,7 +83,7 @@ ThreeDMapUntiled.prototype.createScene = function (mesh) {
     return scene;
 };
 
-ThreeDMapUntiled.prototype.createCamera = function () {
+ThreeDMapUntiled.prototype._createCamera = function () {
     var fov = 45,
         cameraHeight;
 
@@ -128,16 +115,7 @@ ThreeDMapUntiled.prototype.createCamera = function () {
     return camera;
 };
 
-ThreeDMapUntiled.prototype.createGeometry = function () {
-    return new PlaneGeometry(
-        this.dim.demWidth,
-        this.dim.demHeight,
-        this.dim.demWidth - 1,
-        this.dim.demHeight - 1
-    );
-};
-
-ThreeDMapUntiled.prototype.createMaterial = function () {
+ThreeDMapUntiled.prototype._createMaterial = function () {
     var material = new MeshPhongMaterial({ //for shading and Ambient Light
         side: DoubleSide
     });
@@ -145,43 +123,42 @@ ThreeDMapUntiled.prototype.createMaterial = function () {
     return material;
 };
 
-ThreeDMapUntiled.prototype.createMesh = function (geometry, material) {
-    return new Mesh(geometry, material);
+ThreeDMapUntiled.prototype._createMesh = function () {
+    return new Mesh(this.terrain.getGeometry(), this._material);
 };
 
-ThreeDMapUntiled.prototype.createControls = function () {
+ThreeDMapUntiled.prototype._createControls = function () {
     return new TrackballControls(this._camera);
 };
 
-ThreeDMapUntiled.prototype.render = function () {
-    this.controls.update();
-    window.requestAnimationFrame(this.render.bind(this));
-    this.renderer.render(this.scene, this._camera);
+ThreeDMapUntiled.prototype._render = function () {
+    this._controls.update();
+    window.requestAnimationFrame(this._render.bind(this));
+    this._renderer.render(this._scene, this._camera);
 };
 
-ThreeDMapUntiled.prototype.resizeMe = function () {
+ThreeDMapUntiled.prototype._resizeMe = function () {
     window.clearTimeout(this.reloadTimer);
-    this.reloadTimer = window.setTimeout(this.reloadAll.bind(this), 1000);
+    this.reloadTimer = window.setTimeout(this._reloadAll.bind(this), 1000);
     return;
 };
 
-ThreeDMapUntiled.prototype.reloadAll = function () {
+ThreeDMapUntiled.prototype._reloadAll = function () {
     this.dim.width = this.dim.div.clientWidth;
     this.dim.height = this.dim.div.clientHeight;
 
     this._camera.aspect = this.dim.width / this.dim.height;
     this._camera.updateProjectionMatrix();
 
-    delete(this.controls);
-    this.controls = this.createControls();
-    this.renderer.setSize(this.dim.width, this.dim.height);
+    delete(this._controls);
+    this._controls = this._createControls();
+    this._renderer.setSize(this.dim.width, this.dim.height);
 };
 
-
 ThreeDMapUntiled.prototype.addLine = function (lineGeom, lineStyle) {
-    var line = Line(lineGeom, lineStyle, this.geometry, this.dim.envelope);
+    var line = Line(lineGeom, lineStyle, this.terrain.getGeometry(), this.dim.envelope);
     var threeLine = line.getThreeLine();
-    this.scene.add(threeLine);
+    this._scene.add(threeLine);
     if (line.needsClamp()) {
         this.linesToClamp.push(line);
     }
@@ -191,8 +168,8 @@ ThreeDMapUntiled.prototype._clampLines = function () {
     _.each(this.linesToClamp, function (line) {
         var oldLine = line.getThreeLine();
         var clamped = line.clamp();
-        this.scene.remove(oldLine);
-        this.scene.add(clamped);
+        this._scene.remove(oldLine);
+        this._scene.add(clamped);
     }, this);
     this.linesToClamp = [];
 };
