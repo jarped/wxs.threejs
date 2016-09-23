@@ -1,16 +1,17 @@
 import * as _ from 'underscore';
 
-import toUtm33 from './util/toUtm33';
+import transform from './util/transform';
 
-export default function Envelope(bbox) {
-
+export default function Envelope(bbox, crs, bboxCrs) {
     var bbox = _.map(bbox.split(','), parseFloat);
     var ne = [bbox[0], bbox[1]];
     var sw = [bbox[2], bbox[3]];
-    var ne33 = toUtm33(ne);
-    var sw33 = toUtm33(sw);
+    if (crs !== bboxCrs) {
+        ne = transform(ne, bboxCrs, crs);
+        sw = transform(sw, bboxCrs, crs);
+    }
 
-    var envelope = ne33.concat(sw33);
+    var envelope = ne.concat(sw);
 
     function width() {
         return envelope[2] - envelope[0];
@@ -37,6 +38,7 @@ export default function Envelope(bbox) {
         height: height,
         bbox: getBbox,
         minX: minX,
-        minY: minY
+        minY: minY,
+        mapCrs: crs
     };
 }

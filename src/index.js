@@ -10,11 +10,13 @@ import Envelope from './Envelope';
 var defaults = {
     div: 'map',
     bbox: '7.856598,62.333035,8.583069,62.559503',
+    bboxCrs: 'EPSG:4326',
     wireframe: false,
     zMult: 1,
     zInv: false,
     crs: 'EPSG:32633',
     texture: {
+        type: 'wms',
         wmsUrl: 'http://openwms.statkart.no/skwms1/wms.topo2',
         wmsLayers: 'topo2_WMS',
         wmsFormat: 'image/png',
@@ -44,17 +46,8 @@ function Dimensions(config) {
     var width = div.clientWidth;
     var height = div.clientHeight;
 
-    var envelope = Envelope(config.bbox);
+    var envelope = Envelope(config.bbox, config.crs, config.bboxCrs);
 
-    /*
-    var bbox = _.map(config.bbox.split(','), parseFloat);
-    var ne = [bbox[0], bbox[1]];
-    var sw = [bbox[2], bbox[3]];
-    var ne33 = toUtm33(ne);
-    var sw33 = toUtm33(sw);
-
-    var envelope = ne33.concat(sw33);
-    */
     var metersWidth = envelope.width();
     var metersHeight = envelope.height();
 

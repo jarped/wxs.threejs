@@ -7,7 +7,7 @@ import {
 } from 'three';
 
 import clampLineString from './clampLineString';
-import toUtm33 from '../util/toUtm33';
+import transform from '../util/transform';
 
 function ALine(lineGeom, style, geometry, envelope) {
 
@@ -53,7 +53,9 @@ function ALine(lineGeom, style, geometry, envelope) {
         var xFactor = envelope.width() / pixelWidth;
         var yFactor = envelope.height() / pixelHeight;
 
-        var linedata = _.map(lineGeom.coordinates, toUtm33);
+        var linedata = _.map(lineGeom.coordinates, function (coord) {
+            return transform(coord, 'EPSG:4326', envelope.mapCrs);
+        });
 
         var points = _.map(linedata, function (coord) {
             var x = coord[0];
