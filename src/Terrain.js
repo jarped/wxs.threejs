@@ -6,7 +6,7 @@ import {
     Geometry,
     Vector3,
     Face3,
-    Group,  
+    Group,
     Mesh
 } from 'three';
 import * as _ from 'underscore';
@@ -145,15 +145,18 @@ var Terrain = function (terrainConfig, dim) {
         sideGeometry.faces = faces;
         return new Mesh(sideGeometry, new MeshBasicMaterial({
             side: DoubleSide,
-            color: 0xdddddd,
+            color: terrainConfig.boxColor,
             wireframe: false
         }));
     }
 
     function getSides() {
+        if (!terrainConfig.showBox) {
+            return null;
+        }
         var material = new MeshBasicMaterial({
             wireframe: false,
-            color: 0xdddddd,
+            color: terrainConfig.boxColor,
             side: BackSide
         });
 
@@ -207,7 +210,9 @@ var Terrain = function (terrainConfig, dim) {
         minHeight: function () {
             return minHeight;
         },
-        getSides: getSides
+        getSides: getSides,
+
+        showBox: terrainConfig.showBox
     };
 };
 

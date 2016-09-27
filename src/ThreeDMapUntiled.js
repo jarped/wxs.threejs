@@ -5,7 +5,9 @@ import {
     PerspectiveCamera,
     PlaneGeometry,
     MeshPhongMaterial,
-    Mesh
+    Mesh,
+    DoubleSide,
+    FrontSide
 } from 'three';
 import TrackballControls from 'three.trackball';
 import * as _ from 'underscore';
@@ -64,6 +66,7 @@ ThreeDMapUntiled.prototype._terrainLoaded = function () {
 
 ThreeDMapUntiled.prototype._textureLoaded = function (texture) {
     this._material.map = texture;
+    console.log(this._material);
     this._material.needsUpdate = true;
     this.events.fire('onTextureLoadEnd');
 };
@@ -121,7 +124,7 @@ ThreeDMapUntiled.prototype._createCamera = function () {
 
 ThreeDMapUntiled.prototype._createMaterial = function () {
     var material = new MeshPhongMaterial({ //for shading and Ambient Light
-        //side: DoubleSide
+        side: this.terrain.showBox ? FrontSide : DoubleSide
     });
     material.wireframe = this.dim.wireframe;
     return material;

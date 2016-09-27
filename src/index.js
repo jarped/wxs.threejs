@@ -27,7 +27,9 @@ var defaults = {
         wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
         wcsResolution: 10, //resolution of grid cell in meters
         coverage: 'land_utm33_10m',
-        format: 'geotiff'
+        format: 'geotiff',
+        showBox: true,
+        boxColor: 0xdddddd
     }
 };
 
