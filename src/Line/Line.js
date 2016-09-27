@@ -11,6 +11,13 @@ import transform from '../util/transform';
 
 function ALine(lineGeom, style, geometry, envelope) {
 
+    var styleDefaults = {
+        color: 0x0000ff,
+        linewidth: 5
+    };
+
+    style = _.extend({}, styleDefaults, style || {});
+
     var needsClamp = true;
     var line;
 
@@ -19,9 +26,7 @@ function ALine(lineGeom, style, geometry, envelope) {
             return new Vector3(point.x, point.y, point.z);
         });
 
-        var material = new LineBasicMaterial({
-            color: color || 0x0000ff
-        });
+        var material = new LineBasicMaterial(style);
         var geometry = new Geometry();
         geometry.vertices = vertices;
         return new Line(geometry, material);
