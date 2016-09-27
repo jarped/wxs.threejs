@@ -30,5 +30,8 @@
     "three.trackball": "0.0.1",
     "underscore": "^1.8.3",
     "webpack": "^1.13.2"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.4"
   }
 }
