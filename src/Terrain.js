@@ -22,33 +22,34 @@ var Terrain = function (terrainConfig, dim) {
     var geometry;
     var minHeight;
 
-    function _parseHeights(xhr) {
-        var lines,
-            numVertices = geometry.vertices.length;
-
-        var tiffParser, tiffArray;
-        if (isTiff) {
-            tiffParser = new TIFFParser();
-            tiffArray = tiffParser.parseTIFF(xhr.response);
-            lines = tiffArray;
-        } else { //assume ZYZ
-            lines = xhr.responseText.split('\n');
-        }
-
+    function _getTiffHeights(xhr) {
+        var tiffParser = new TIFFParser();
+        var tiffArray = tiffParser.parseTIFF(xhr.response);
+        var i = -1;
         var heights = [];
-        //loop trought heights and calculate midHeigth
-        if (isTiff) { //geotiff
-            var i = -1;
-            for (var j = 0; j < lines.length; j++) {
-                for (var k = 0; k < lines[j].length; k++) {
-                    heights[++i] = parseInt(lines[j][k][0], 10);
-                }
-            }
-        } else {//XYZ
-            for (var i = 0, l = numVertices; i < l; i++) {
-                heights[i] = parseInt(lines[i].split(' ')[2], 10);
+        for (var j = 0; j < tiffArray.length; j++) {
+            for (var k = 0; k < tiffArray[j].length; k++) {
+                heights.push(parseInt(tiffArray[j][k][0], 10));
             }
         }
+        return heights;
+    }
+
+    function _getXYZHeights(xhr) {
+        var numVertices = geometry.vertices.length;
+        var lines = xhr.responseText.split('\n');
+        var heights = [];
+        for (var i = 0, l = numVertices; i < l; i++) {
+            heights[i] = parseInt(lines[i].split(' ')[2], 10);
+        }
+        return heights;
+    }
+
+    function _parseHeights(xhr) {
+
+        var heights = isTiff
+            ? _getTiffHeights(xhr)
+            : _getXYZHeights(xhr);
 
         var minHeight = _.min(heights);
         var maxHeight = _.max(heights);
