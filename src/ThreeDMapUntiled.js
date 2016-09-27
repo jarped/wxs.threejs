@@ -17,10 +17,12 @@ import createQueryString from './util/createQueryString';
 import events from './util/events';
 import Line from './Line/Line';
 
-var ThreeDMapUntiled = function (dim, terrain, texture) {
+
+var ThreeDMapUntiled = function (dim, terrain, texture, profiles) {
     this.dim = dim;
     this.terrain = terrain;
     this.texture = texture;
+    this.profiles = profiles;
     this.events = events();
 
     this.reloadTimer = -1;
@@ -47,7 +49,7 @@ var ThreeDMapUntiled = function (dim, terrain, texture) {
     this.terrain.loadTerrain(this._terrainLoaded.bind(this));
 
     this.events.fire('onTextureLoadStart');
-    this.texture.loadTexture(this._textureLoaded.bind(this));
+    this.texture.loadTexture(this._material, this._textureLoaded.bind(this));
 
     //Adust canvas if container is resized
     window.addEventListener('resize', this._resizeMe.bind(this), false);
@@ -62,12 +64,19 @@ ThreeDMapUntiled.prototype.on = function (event, callback, context) {
 ThreeDMapUntiled.prototype._terrainLoaded = function () {
     this.events.fire('onTerrainLoadEnd');
     this._scene.add(this.terrain.getSides());
+
+    if (this.profiles) {
+        this.profiles.load(this._profilesLoaded.bind(this));
+    }
+};
+
+ThreeDMapUntiled.prototype._profilesLoaded = function (meshes) {
+    _.each(meshes, function (mesh) {
+        this._scene.add(mesh);
+    }, this);
 };
 
 ThreeDMapUntiled.prototype._textureLoaded = function (texture) {
-    this._material.map = texture;
-    console.log(this._material);
-    this._material.needsUpdate = true;
     this.events.fire('onTextureLoadEnd');
 };
 
@@ -82,8 +91,8 @@ ThreeDMapUntiled.prototype._createRenderer = function () {
 
 ThreeDMapUntiled.prototype._createScene = function (mesh) {
     var scene = new Scene();
-    //Ambient Light for MeshPhongMaterial
 
+    //Ambient Light for MeshPhongMaterial
     scene.add(new AmbientLight(0xffffff));
     scene.add(mesh);
 

@@ -20,7 +20,7 @@ var Terrain = function (terrainConfig, dim) {
 
     var isTiff = (terrainConfig.format === 'geotiff');
     var geometry;
-    var minHeight;
+    var minHeight, midHeight;
 
     function _getTiffHeights(xhr) {
         var tiffParser = new TIFFParser();
@@ -85,6 +85,7 @@ var Terrain = function (terrainConfig, dim) {
         geometry.loaded = true;
         geometry.verticesNeedUpdate = true;
         minHeight = data.minHeight;
+        midHeight = data.midHeight;
     }
 
     function loadTerrain(callback) {
@@ -209,6 +210,9 @@ var Terrain = function (terrainConfig, dim) {
         },
         minHeight: function () {
             return minHeight;
+        },
+        midHeight: function () {
+            return midHeight;
         },
         getSides: getSides,
 

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <style type="text/css">
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow:hidden;
+            }
+
+            #threedmap {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #ccccff;
+            }   
+        </style>
+        <title>WXS.three</title>
+    </head>
+    <body>
+        <div id="threedmap"></div>
+        <script type="text/javascript" src="../bundles/Wxs3Map.bundle.js"></script>
+        <script type="text/javascript">
+            var config2 = {
+                div: 'threedmap',
+                bbox: '207128.41406537,7007786.9589679,302470.86791987,7094986.9589679',
+                bboxCrs: 'EPSG:32633',
+                wireframe: false,
+                zMult: 4,
+                texture: {
+                    type: 'image',
+                    imgUrl: '/img/TrondheimBerggrunn2.png'
+                },
+                terrain: {
+                    wcsUrl: 'http://wms.geonorge.no/skwms1/wcs.dtm',
+                    coverage: 'land_utm33_10m',
+                    showBox: false
+                },
+                profiles: [
+                    {
+                        name: 'Profile 0',
+                        imgUrl: '/img/trondheim_A_test_alpha_1.png',
+                        CRS: 'EPSG:32632',
+                        xyStart: {x: 528887, y: 7081214},
+                        xyEnd: {x: 574049, y: 7005717},
+                        zStart: 900,
+                        zEnd: -1406
+                    }
+                ]
+            };
+            var threeDMap = window.Wxs3Map(config2);
+
+        </script>
+    </body>
+</html>

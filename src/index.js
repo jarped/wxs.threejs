@@ -5,6 +5,7 @@ import ThreeDMapUntiled from './ThreeDMapUntiled';
 
 import Texture from './Texture';
 import Terrain from './Terrain';
+import Profiles from './Profiles';
 import Envelope from './Envelope';
 
 var defaults = {
@@ -30,7 +31,8 @@ var defaults = {
         format: 'geotiff',
         showBox: true,
         boxColor: 0xdddddd
-    }
+    },
+    profiles: null
 };
 
 function extendDefaults(config) {
@@ -118,7 +120,11 @@ function Wxs3Map(config) {
     var dimensions = Dimensions(config);
     var texture = Texture(config.texture, dimensions);
     var terrain = Terrain(config.terrain, dimensions);
-    return new ThreeDMapUntiled(dimensions, terrain, texture);
+    var profiles;
+    if (config.profiles) {
+        profiles = Profiles(config.profiles, terrain, dimensions);
+    }
+    return new ThreeDMapUntiled(dimensions, terrain, texture, profiles);
 }
 
 window.Wxs3Map = Wxs3Map;

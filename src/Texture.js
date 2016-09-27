@@ -26,7 +26,7 @@ function Texture(textureConfig, dim) {
         return textureConfig.wmsUrl + '?' + createQueryString(params);
     };
 
-    function loadTexture(callback) {
+    function loadTexture(material, callback) {
         var loader = new TextureLoader(),
             image = _getImageMap();
         // load a resource
@@ -36,7 +36,11 @@ function Texture(textureConfig, dim) {
                 //Texture is probably not the power of two.
                 //Avoid warning: Apply THREE.LinearFilter or THREE.NearestFilter
                 texture.minFilter = LinearFilter;
-                callback(texture);
+                material.map = texture;
+                material.needsUpdate = true;
+                if (callback) {
+                    callback(texture);
+                }
             },
             // Function called when download progresses
             function (xhr) {},
