@@ -56,10 +56,10 @@
 		         matrixIds[i].identifier = mapProj + ":" + i;
        			} 
 	  
-		       var topo2_wmts = new OpenLayers.Layer.WMTS({
-        		 name: "topo2",
+		       var topo4_wmts = new OpenLayers.Layer.WMTS({
+        		 name: "topo4",
 		         url: "https://opencache.statkart.no/gatekeeper/gk/gk.open_wmts",
-		         layer: "topo2",
+		         layer: "topo4",
 		         matrixSet: mapProj,
 		         matrixIds: matrixIds,
 		         format: "image/png",
@@ -121,7 +121,7 @@
                }); 
  
 
-			    map.addLayers([topo2_wmts, terreng_wmts, toporaster2_wmts]);
+			    map.addLayers([topo4_wmts, terreng_wmts, toporaster2_wmts]);
 	        	// Add layers to map and zoom to extents
 				map.setCenter(new OpenLayers.LonLat(165535,6834611),5);
 				map.zoomTo(10);
