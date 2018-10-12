@@ -41,7 +41,7 @@ var wxs3 = wxs3 || {};
           return capabilitiesXml.documentElement.namespaceURI;
         }
         else if (aPrefix == 'ows') {
-          return 'http://www.opengis.net/ows/1.1';
+          return 'https://www.opengis.net/ows/1.1';
         }
       }
     };

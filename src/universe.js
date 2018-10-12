@@ -16,7 +16,7 @@ function getQueryVariable(variable) {
 // check WebGL
 if (!window.WebGLRenderingContext) {
   // the browser doesn't even know what WebGL is
-  window.location = "http://get.webgl.org";
+  window.location = "https://get.webgl.org";
 }
 
 // utility func to convert dict of {key: "val", key2: "val2"} to key=val&key2=val2
@@ -67,9 +67,9 @@ Dim = {
   wmsUrl: getQueryVariable("WMS") || false,
   wmtsLayer: getQueryVariable("LAYER") || 'topo2',
   wmsLayers: getQueryVariable("LAYERS") || 'topo2',
-  wmtsUrl: getQueryVariable("WMTS") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
-  wmscUrl:  getQueryVariable("WMSC") || 'http://opencache.statkart.no/gatekeeper/gk/gk.open_cache',
-  wcsUrl: getQueryVariable("WCS")||'http://wms.geonorge.no/skwms1/wcs.dtm',
+  wmtsUrl: getQueryVariable("WMTS") || 'https://opencache.statkart.no/gatekeeper/gk/gk.open_wmts',
+  wmscUrl:  getQueryVariable("WMSC") || 'https://opencache.statkart.no/gatekeeper/gk/gk.open_cache',
+  wcsUrl: getQueryVariable("WCS")||'https://wms.geonorge.no/skwms1/wcs.dtm',
   wmsFormat: getQueryVariable("WMSFORMAT") || "image/png",
   wmsFormatMode: "",
   gatekeeperTicket: getQueryVariable("GKT")||false,
